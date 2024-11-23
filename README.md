@@ -19,7 +19,7 @@
 Для установки и запуска проекта необходимо выполнить команды
 
 ```
-npm install
+npm install done
 npm run start
 ```
 

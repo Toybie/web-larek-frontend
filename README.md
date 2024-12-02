@@ -50,346 +50,80 @@ Webpack
 Структура проекта:
 
 - src/ — исходные файлы проекта
-- src/components/ — папка с JS компонентами
-- src/components/base/ — папка с базовым кодом
+- src/components/base/ — папка с api.ts
 
 Важные файлы:
 
 - src/pages/index.html — HTML-файл главной страницы
 - src/types/index.ts — файл с типами
 - src/index.ts — точка входа приложения
-- src/styles/styles.scss — корневой файл стилей
+- src/scss/styles.scss — корневой файл стилей
 - src/utils/constants.ts — файл с константами
 - src/utils/utils.ts — файл с утилитами
 
 
 ## Документация
 
-### Типы данных
+### **Описание компонентов**
 
-Категории товара
+#### **Компонент ProductCard**
+**Назначение**: Компонент ProductCard отображает информацию о товаре в каталоге. Он показывает изображение товара, его название, категорию и цену, а также предоставляет кнопки для добавления товара в корзину и удаления из корзины.
 
-```TypeScript
-/*
-    Тип описывающий все возможные категории товара
-*/
-type CategoryType =
-  | 'другое'
-  | 'софт-скил'
-  | 'дополнительное'
-  | 'кнопка'
-  | 'хард-скил';
+**Функции**:
+- Отображает товар с данными: изображение, название, цена.
+- Позволяет пользователю добавить товар в корзину или удалить его.
+- Связан с компонентом корзины через события `ADD_TO_BASKET` и `REMOVE_FROM_BASKET`.
 
-/*
-    Тип, описывающий ошибки валидации форм
-*/
-type FormErrors = Partial<Record<keyof IOrderForm, string>>;
+#### **Компонент Basket**
+**Назначение**: Компонент Basket отображает содержимое корзины покупок. Он показывает список товаров в корзине, их количество, цену и предоставляет возможность удаления товара из корзины или оформления заказа.
 
-/*
-  * Интерфейс, описывающий карточку товара в магазине
-* */
-interface IProduct {
-  id: string;
-  title: string;
-  description: string;
-  price: number | null;
-  image: string;
-  category: CategoryType;
-  selected: boolean;
-}
+**Функции**:
+- Отображает список товаров в корзине.
+- Рассчитывает итоговую сумму всех товаров в корзине.
+- Реализует события `REMOVE_FROM_BASKET` и `CHECKOUT`.
 
-/*
-  * Интерфейс, описывающий внутренне состояние приложения
-    Используется для хранения карточек, корзины, заказа пользователя, ошибок
-    в формах
-    Так же имеет методы для работы с карточками и корзиной
-  * */
-interface IAppState {
-  basket: Product[];
-  store: Product[];
-  order: IOrder;
-  formErrors: FormErrors;
-  addToBasket(value: Product): void;
-  deleteFromBasket(id: string): void;
-  clearBasket(): void;
-  getBasketAmount(): number;
-  getTotalBasketPrice(): number;
-  setItems(): void;
-  setOrderField(field: keyof IOrderForm, value: string): void;
-  validateContacts(): boolean;
-  validateOrder(): boolean;
-  refreshOrder(): boolean;
-  setStore(items: IProduct[]): void;
-  resetSelected(): void;
-}
+#### **Компонент OrderForm**
+**Назначение**: Компонент OrderForm отвечает за отображение формы для ввода данных о способе оплаты и адресе доставки.
 
-/*
-  * Интерфейс, описывающий поля заказа товара
-* */
-export interface IOrder {
-  items: string[];
-  payment: string;
-  total: number;
-  address: string;
-  email: string;
-  phone: string;
-}
+**Функции**:
+- Отображает поля для ввода адреса доставки, email, телефона.
+- Проверяет корректность введенных данных.
+- Отправляет данные формы для оформления заказа.
 
-/*
-  * Интерфейс, описывающий карточку товара
-* */
-interface ICard {
-  id: string;
-  title: string;
-  category: string;
-  description: string;
-  image: string;
-  price: number | null;
-  selected: boolean;
-}
+---
 
-/*
-  * Интерфейс описывающий страницу
-  * */
-interface IPage {
-  counter: number;
-  store: HTMLElement[];
-  locked: boolean;
-}
+#### **Модели данных**
 
-/*
-  * Интерфейс, описывающий корзину товаров
-  * */
-export interface IBasket {
-  list: HTMLElement[];
-  price: number;
-}
+##### **Базовая модель**
+`Component` и `Model` являются основными классами, которые реализуют структуру и поведение для компонентов приложения. Компонент отображает данные на экране, а модель управляет состоянием приложения, взаимодействая с данными.
 
-/*
-  * Интерфейс, описывающий окошко заказа товара
-  * */
-export interface IOrder {
-  address: string;
-  payment: string;
-}
+- **`Component`** — класс, отвечающий за отрисовку и работу с DOM.
+- **`Model`** — абстрактный класс для работы с данными и событиями в приложении.
 
-/*
-  * Интерфейс, описывающий окошко контакты
-  * */
-export interface IContacts {
-  phone: string;
-  email: string;
-}
-```
+##### **Состояние приложения**
+Класс `AppState` содержит данные о текущем состоянии приложения, такие как товары в корзине, список товаров в каталоге и информацию о заказе.
 
-### Модели данных
+---
 
-```TypeScript
-/**
- * Базовая модель, чтобы можно было отличить ее от простых объектов с данными
- */
-abstract class Model<T> {
-  constructor(data: Partial<T>, protected events: IEvents) {}
-  emitChanges(event: string, payload?: object) {}
-}
+#### **События**
+Проект использует события для взаимодействия между компонентами:
 
-/*
-  * Класс, описывающий состояние приложения
-  * */
-class AppState extends Model<IAppState> {
-  basket: Product[] = [];
-  store: Product[];
-  order: IOrder = {
-    items: [],
-    payment: '',
-    total: null,
-    address: '',
-    email: '',
-    phone: '',
-  };
+- `PRODUCT_SELECTED` — срабатывает при выборе товара.
+- `ADD_TO_BASKET` — срабатывает при добавлении товара в корзину.
+- `REMOVE_FROM_BASKET` — срабатывает при удалении товара из корзины.
+- `ORDER_SUBMITTED` — срабатывает при отправке формы заказа.
+- `ORDER_SUCCESS` — сигнализирует об успешном оформлении заказа.
+- `BASKET_UPDATED` — обновляет состояние корзины.
 
-  // Объект с ошибками форм
-  formErrors: FormErrors = {};
-  addToBasket(value: Product): void;
-  deleteFromBasket(id: string): void;
-  clearBasket(): void;
-  getBasketAmount(): number;
-  getTotalBasketPrice(): number;
-  setItems(): void;
-  setOrderField(field: keyof IOrderForm, value: string): void;
-  validateContacts(): boolean;
-  validateOrder(): boolean;
-  refreshOrder(): boolean;
-  setStore(items: IProduct[]): void;
-  resetSelected(): void;
-}
-```
+#### **Класс EventEmitter**
+`EventEmitter` реализует паттерн "Наблюдатель" для обработки событий между компонентами.
 
-### Классы представления 
-```TypeScript
-// Тип описывающий категорию товара
-export type CategoryType = 'другое' | 'софт-скил' | 'дополнительное' | 'кнопка' | 'хард-скил';
+**Методы**:
+- **`on`** — устанавливает обработчик для события.
+- **`off`** — удаляет обработчик для события.
+- **`emit`** — инициирует событие.
+- **`trigger`** — создает триггер для вызова события.
 
-// Интерфейс для работы с API
-export type ApiListResponse<Type> = {
-  total: number;
-  items: Type[];
-};
-
-export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
-
-// Интерфейс для работы с API
-export interface IWebLarekAPI {
-  getProductList(): Promise<ApiListResponse<IProduct>>;
-  getProductItem(id: string): Promise<IProduct>;
-  createOrder(orderData: IOrder): Promise<IOrderResult>;
-}
-
-// Интерфейс товара
-export interface IProduct {
-  id: string;
-  title: string;
-  description: string;
-  price: number | null;
-  image: string;
-  category: CategoryType;
-  selected: boolean;
-}
-
-// Элемент корзины
-export interface BasketItem {
-  productId: string;
-  quantity: number;
-}
-
-// Интерфейс данных заказа
-export interface IOrder {
-  items: string[]; // массив ID товаров
-  payment: 'online' | 'cash';
-  total: number;
-  address: string;
-  email: string;
-  phone: string;
-}
-
-// Результат оформления заказа
-export interface IOrderResult {
-  orderId: string;
-  totalSpent: number;
-}
-
-// Интерфейс для данных формы заказа
-export interface IOrderForm {
-  paymentMethod: 'online' | 'cash';
-  address: string;
-  email: string;
-  phone: string;
-}
-
-// Интерфейс для компонента товара (отображение в каталоге)
-export interface IProductCardView {
-  product: IProduct;
-  onAddToBasket: (productId: string) => void;
-  onRemoveFromBasket: (productId: string) => void;
-}
-
-// Интерфейс для компонента корзины
-export interface IBasketView {
-  items: BasketItem[];
-  total: number;
-  onRemoveItem: (productId: string) => void;
-  onCheckout: () => void;
-}
-
-// Интерфейс для компонента формы оформления заказа
-export interface IOrderFormView {
-  formData: IOrderForm;
-  onSubmit: (formData: IOrderForm) => void;
-  onInputChange: (field: keyof IOrderForm, value: string) => void;
-}
-
-// Интерфейс для базового компонента
-export interface IBaseComponent<T> {
-  render(data?: T): HTMLElement;
-  setText(element: HTMLElement, value: string): void;
-  setDisabled(element: HTMLElement, state: boolean): void;
-  setImage(el: HTMLImageElement, src: string, alt?: string): void;
-}
-
-// Интерфейс для событий
-export interface IEvents {
-  on(event: string, callback: Function): void;
-  off(event: string, callback: Function): void;
-  emit(event: string, data?: any): void;
-}
-
-// Перечисление для всех событий
-export enum Events {
-  PRODUCT_SELECTED = 'product:selected',
-  ADD_TO_BASKET = 'addToBasket',
-  REMOVE_FROM_BASKET = 'removeFromBasket',
-  ORDER_SUBMITTED = 'order:submitted',
-  ORDER_SUCCESS = 'order:success',
-  BASKET_UPDATED = 'basket:updated',
-  // другие события
-}
-
-// Интерфейс для события добавления товара в корзину
-export interface AddToBasketEvent {
-  type: Events.ADD_TO_BASKET;
-  payload: {
-    productId: string;
-    quantity: number;
-  };
-}
-
-// Интерфейс для события удаления товара из корзины
-export interface RemoveFromBasketEvent {
-  type: Events.REMOVE_FROM_BASKET;
-  payload: {
-    productId: string;
-  };
-}
-
-// Интерфейс для события успешного оформления заказа
-export interface OrderSuccessEvent {
-  type: Events.ORDER_SUCCESS;
-  payload: {
-    orderId: string;
-    totalSpent: number;
-  };
-}
-```
-
-### Описание событий
-
-```TypeScript
-/*
-    Перечисление событий
-*/
-enum Events {
-  PRODUCT_SELECTED = 'product:selected',
-  ADD_TO_BASKET = 'addToBasket',
-  REMOVE_FROM_BASKET = 'removeFromBasket',
-  ORDER_SUBMITTED = 'order:submitted',
-  ORDER_SUCCESS = 'order:success',
-  BASKET_UPDATED = 'basket:updated',
-  // другие события
-}
-
-
-/*
-    Интерфейс для события добавления товара в корзину
-*/
-export interface AddToBasketEvent {
-  type: Events.ADD_TO_BASKET;
-  payload: {
-    productId: string;
-    quantity: number;
-  };
-}
-
-```
 
 ## Автор
 

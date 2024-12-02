@@ -1,4 +1,3 @@
-// src/types/index.ts
 
 // Типы категорий товаров
 export type CategoryType = 

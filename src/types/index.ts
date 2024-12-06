@@ -31,7 +31,6 @@ export interface IAppState {
   basket: IProduct[];   // Список товаров в корзине
   store: IProduct[];    // Список товаров в каталоге
   order: IOrder;        // Данные о заказе
-  formErrors: FormErrors;  // Ошибки в форме
   addToBasket(value: IProduct): void;
   deleteFromBasket(id: string): void;
   clearBasket(): void;

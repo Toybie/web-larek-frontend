@@ -37,3 +37,20 @@
     }
   }
 }
+
+.basket-modal {
+  display: none; // Скрываем модальное окно по умолчанию
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); // Задний фон
+  z-index: 1000;
+
+  &.basket__active {
+    display: flex; // Показываем модалку, когда добавляется класс
+    justify-content: center;
+    align-items: center;
+  }
+}

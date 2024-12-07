@@ -2,35 +2,36 @@
 @use "mixins";
 
 .modal {
-  @include mixins.sublayer;
+  @include mixins.sublayer; /* Добавление фона под слоем */
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  display: none;
+  display: none; /* Скрыто по умолчанию */
   justify-content: center;
-  background-color: $overlayBackground;
-  z-index: 100;
+  background-color: $overlayBackground; /* Цвет фона для подложки */
+  z-index: 100; /* Поднятие модалки поверх других элементов */
   padding-top: 5vh;
   padding-bottom: 5vh;
   box-sizing: border-box;
 
+  /* При добавлении класса _active, модалка становится видимой */
   &_active {
-    display: flex;
+    display: flex; /* Отображается как flex */
   }
 
   &__container {
-    @include mixins.container;
-    @include mixins.flex(column);
-    gap: $defaultPadding;
-    background-color: $background;
-    border-radius: 3rem;
+    @include mixins.container; /* Стиль контейнера */
+    @include mixins.flex(column); /* Flexbox по вертикали */
+    gap: $defaultPadding; /* Расстояние между элементами */
+    background-color: $background; /* Фон контейнера */
+    border-radius: 3rem; /* Закругленные углы */
     box-sizing: border-box;
     position: relative;
   }
 
   &__content {
-    flex-grow: 1;
+    flex-grow: 1; /* Контент будет расширяться по мере необходимости */
   }
 
   &__title {
@@ -40,33 +41,33 @@
   }
 
   &__actions {
-    @include mixins.flex(row);
-    align-items: center;
-    gap: 2rem;
+    @include mixins.flex(row); /* Flexbox по горизонтали */
+    align-items: center; /* Выравнивание элементов по центру */
+    gap: 2rem; /* Расстояние между действиями */
   }
 
   &__close {
     position: absolute;
-    top: calc(#{$defaultPadding} / 2);
-    right: calc(#{$defaultPadding} / 2);
-    @include mixins.icon(2rem, 'close');
-    @include mixins.link(white, $hover);
+    top: calc(#{$defaultPadding} / 2); /* Отступ сверху */
+    right: calc(#{$defaultPadding} / 2); /* Отступ справа */
+    @include mixins.icon(2rem, 'close'); /* Используем иконку для кнопки закрытия */
+    @include mixins.link(white, $hover); /* Стили для кнопки при наведении */
   }
 
   &__footer {
-    @include mixins.flex(row);
-    align-items: center;
-    gap: 2rem;
+    @include mixins.flex(row); /* Flexbox по горизонтали */
+    align-items: center; /* Выравнивание элементов по центру */
+    gap: 2rem; /* Расстояние между элементами */
   }
 
   &__message {
-    white-space: nowrap;
-    max-width: 60%;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    white-space: nowrap; /* Не переносить текст на новую строку */
+    max-width: 60%; /* Максимальная ширина сообщения */
+    text-overflow: ellipsis; /* Троеточие, если текст не помещается */
+    overflow: hidden; /* Скрывать переполнение текста */
 
     &_error {
-      color: $error;
+      color: $error; /* Цвет для ошибок */
     }
   }
 }

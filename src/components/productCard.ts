@@ -33,7 +33,7 @@ export class ProductCard {
     titleElement.textContent = product.title;
 
     const priceElement = clone.querySelector('.card__price')!;
-    priceElement.textContent = `${product.price ? product.price : 'Цена не указана'} синапсов`;
+    priceElement.textContent = `${product.price ? product.price : 'Бесценно'}`;
 
     const imageElement = clone.querySelector('.card__image') as HTMLImageElement;
 

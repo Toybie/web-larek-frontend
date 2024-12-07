@@ -1,19 +1,7 @@
 import './scss/styles.scss';
 import { Api } from './components/base/api';
-import { 
-  IProduct, 
-  IAppState, 
-  IOrder, 
-  IOrderForm, 
-  IOrderResult, 
-  Events, 
-  AddToBasketEvent, 
-  RemoveFromBasketEvent, 
-  OrderSuccessEvent, 
-  IEvents 
-} from './types';
+import { IProduct, IAppState, IOrderForm } from './types';
 import { Modal } from './components/cardModal';
-import { BasketModal } from './components/basketModal';
 
 export const API_URL = `${process.env.API_ORIGIN}/api/weblarek`;
 export const CDN_URL = `${process.env.API_ORIGIN}/content/weblarek`;
@@ -23,29 +11,14 @@ const modal = new Modal('.modal', 'card-preview');
 
 // Имитация глобального состояния приложения
 const appState: IAppState = {
-  basket: [],
   store: [],
-  order: {} as IOrder,
-  addToBasket(value: IProduct) {
-    this.basket.push(value);
-    basketModal.addToBasket(value); // Обновляем корзину
+
+  setStore(items: IProduct[]) {
+    this.store = items;
   },
-  deleteFromBasket(id: string) {
-    this.basket = this.basket.filter((item: { id: string; }) => item.id !== id);
-    basketModal.removeFromBasket(id); // Обновляем корзину
-  },
-  clearBasket() {
-    this.basket = [];
-    basketModal.clearBasket(); // Очищаем корзину
-  },
-  getBasketAmount() {
-    return this.basket.length;
-  },
-  getTotalBasketPrice() {
-    return this.basket.reduce((total: number, item: IProduct) => total + (item.price || 0), 0);
-  },
-  setItems() {}, // Реализуйте эту функцию согласно вашим требованиям
-  setOrderField(field: keyof IOrderForm, value: string) {}, // Реализуйте эту функцию согласно вашим требованиям
+
+  setItems() { }, // Реализуйте эту функцию согласно вашим требованиям
+  setOrderField(field: keyof IOrderForm, value: string) { }, // Реализуйте эту функцию согласно вашим требованиям
   validateContacts() {
     return true; // Реализуйте эту функцию согласно вашим требованиям
   },
@@ -55,16 +28,29 @@ const appState: IAppState = {
   refreshOrder() {
     return true; // Реализуйте эту функцию согласно вашим требованиям
   },
-  setStore(items: IProduct[]) {
-    this.store = items;
+  basket: [],
+  order: undefined,
+  addToBasket: function (value: IProduct): void {
+    throw new Error('Function not implemented.');
   },
-  resetSelected() {}, // Реализуйте эту функцию согласно вашим требованиям
+  deleteFromBasket: function (id: string): void {
+    throw new Error('Function not implemented.');
+  },
+  clearBasket: function (): void {
+    throw new Error('Function not implemented.');
+  },
+  getBasketAmount: function (): number {
+    throw new Error('Function not implemented.');
+  },
+  getTotalBasketPrice: function (): number {
+    throw new Error('Function not implemented.');
+  },
+  resetSelected: function (): void {
+    throw new Error('Function not implemented.');
+  }
 };
 
-const basketModal = new BasketModal(document.querySelector('.header__basket') as HTMLElement, appState);
-
-// Функция загрузки продуктов
-async function loadProducts() {
+const loadProducts = async () => {
   try {
     const response = await api.get('/product/');
     const products: IProduct[] = response.items as IProduct[];
@@ -124,12 +110,7 @@ async function loadProducts() {
     const gallery = document.querySelector('.gallery') as HTMLElement;
     gallery.innerHTML = '<p>Не удалось загрузить данные. Пожалуйста, попробуйте позже.</p>';
   }
-}
+};
 
 // Загружаем продукты после загрузки DOM
 window.addEventListener('DOMContentLoaded', loadProducts);
-
-// Подключаемся к событию корзины
-document.querySelector('.header__basket')!.addEventListener('click', () => {
-  basketModal.open();
-});

@@ -28,21 +28,8 @@ export interface IFormState {
 
 // Интерфейс для состояния приложения
 export interface IAppState {
-  basket: IProduct[];   // Список товаров в корзине
-  store: IProduct[];    // Список товаров в каталоге
-  order: IOrder;        // Данные о заказе
-  addToBasket(value: IProduct): void;
-  deleteFromBasket(id: string): void;
-  clearBasket(): void;
-  getBasketAmount(): number;
-  getTotalBasketPrice(): number;
-  setItems(): void;
-  setOrderField(field: keyof IOrderForm, value: string): void;
-  validateContacts(): boolean;
-  validateOrder(): boolean;
-  refreshOrder(): boolean;
+  store: IProduct[];
   setStore(items: IProduct[]): void;
-  resetSelected(): void;
 }
 
 // Интерфейс для формы заказа

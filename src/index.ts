@@ -208,17 +208,10 @@ basketButton.addEventListener('click', () => {
 
         updateBasket(); // Обновляем корзину внутри модального окна
 
-        // Ищем кнопку "Оформить" с правильным классом
-        const checkoutButton = document.querySelector('.basket__button') as HTMLButtonElement;
+        // Обновляем содержимое модалки и находим кнопку "Оформить"
+        const checkoutButton = modalContent.querySelector('.basket__button') as HTMLButtonElement;
         if (checkoutButton) {
-            checkoutButton.addEventListener('click', () => {
-                // Закрываем модальное окно корзины
-                modal.close();
-
-                // Открываем пустое модальное окно для оформления заказа
-                const orderModal = new Modal('.order'); // Указываем правильный класс контейнера для модалки
-                orderModal.open(); // Открываем модальное окно оформления заказа
-            });
+            checkoutButton.addEventListener('click', setupOrderForm); // Меняем содержимое модального окна на форму заказа
         } else {
             console.warn('Кнопка "Оформить" не найдена!');
         }
@@ -226,6 +219,75 @@ basketButton.addEventListener('click', () => {
         console.error('Шаблон корзины не найден!');
     }
 });
+
+// Функция для обработки шаблона заказа
+function setupOrderForm() {
+    const modalContent = document.querySelector('.modal__content') as HTMLElement;
+    const orderTemplate = document.getElementById('order') as HTMLTemplateElement;
+
+    if (!orderTemplate) {
+        console.error('Шаблон для оформления заказа не найден!');
+        return;
+    }
+
+    const orderClone = orderTemplate.content.cloneNode(true) as HTMLElement;
+    modalContent.innerHTML = ''; // Очищаем старое содержимое
+    modalContent.appendChild(orderClone); // Добавляем шаблон заказа
+
+    // Устанавливаем обработчики событий на форму
+    const orderForm = modalContent.querySelector('.form') as HTMLFormElement;
+    if (orderForm) {
+        setupOrderFormEvents(orderForm);
+    } else {
+        console.error('Форма заказа не найдена!');
+    }
+}
+
+// Вспомогательная функция для добавления событий
+function setupOrderFormEvents(form: HTMLFormElement) {
+    const addressInput = form.querySelector('.form__input') as HTMLInputElement;
+    const submitButton = form.querySelector('.order__button') as HTMLButtonElement;
+    const paymentButtons = form.querySelectorAll('.order__buttons .button') as NodeListOf<HTMLButtonElement>;
+
+    let selectedPaymentMethod: string | null = null;
+
+    // Обработка клика на метод оплаты
+    paymentButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            // Снимаем выделение со всех кнопок
+            paymentButtons.forEach((btn) => btn.classList.remove('button_active'));
+            // Добавляем выделение для текущей кнопки
+            button.classList.add('button_active');
+            selectedPaymentMethod = button.name; // Сохраняем выбранный метод оплаты
+            validateForm(); // Проверяем форму после выбора метода оплаты
+        });
+    });
+
+    // Валидация адреса
+    addressInput.addEventListener('input', () => {
+        validateForm(); // Проверяем форму после изменения адреса
+    });
+
+    // Функция проверки состояния формы
+    function validateForm() {
+        const isAddressValid = addressInput.value.trim().length > 0; // Проверка на заполненность адреса
+        const isPaymentSelected = selectedPaymentMethod !== null; // Проверка выбора метода оплаты
+        submitButton.disabled = !(isAddressValid && isPaymentSelected); // Кнопка активна, если оба условия выполнены
+    }
+
+    // Отправка формы
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        if (selectedPaymentMethod) {
+            alert(`Заказ успешно оформлен! Метод оплаты: ${selectedPaymentMethod}, адрес: ${addressInput.value}`);
+        } else {
+            alert('Ошибка: метод оплаты не выбран!');
+        }
+    });
+}
+
+
 
 // Сохранение корзины в localStorage
 function saveBasketToLocalStorage() {

@@ -12,6 +12,9 @@ const modal = new Modal('.modal');
 // Массив товаров в корзине
 let basket: IProduct[] = [];
 
+// Список идентификаторов товаров, которые уже добавлены в корзину
+const addedProductIds = new Set<string>();
+
 // Счетчик товаров на кнопке корзины
 const basketCounter = document.querySelector('.header__basket-counter') as HTMLElement;
 
@@ -24,6 +27,8 @@ const renderProductModalContent = (product: IProduct) => {
     const container = document.createElement('div');
     container.classList.add('card', 'card_full');
 
+    const isPriceValid = product.price !== null;
+
     container.innerHTML = `
         <img class="card__image" src="${CDN_URL}${product.image}" alt="${product.title}" />
         <div class="card__column">
@@ -31,7 +36,9 @@ const renderProductModalContent = (product: IProduct) => {
             <h2 class="card__title">${product.title}</h2>
             <p class="card__text">${product.description || 'Описание товара отсутствует'}</p>
             <div class="card__row">
-                <button class="button" data-id="${product.id}">В корзину</button>
+                <button class="button" data-id="${product.id}" ${!isPriceValid ? 'disabled' : ''}>
+                    ${!isPriceValid ? 'Недоступно' : 'В корзину'}
+                </button>
                 <span class="card__price">${product.price ? `${product.price} синапсов` : 'Бесценно'}</span>
             </div>
         </div>
@@ -53,6 +60,9 @@ const loadProducts = async () => {
 
         products.forEach((product: IProduct) => {
             const clone = template.content.cloneNode(true) as HTMLElement;
+
+            // Проверяем, является ли цена валидной
+            const isPriceValid = product.price !== null;
 
             // Заполняем данные карточки
             const categoryElement = clone.querySelector('.card__category');
@@ -85,14 +95,34 @@ const loadProducts = async () => {
 
                     // Обработчик для добавления в корзину
                     const addToBasketButton = content.querySelector('.button') as HTMLButtonElement;
-                    addToBasketButton.addEventListener('click', () => {
-                        addProductToBasket(product); // Просто добавляем товар в корзину
-                    });
+                    if (addToBasketButton && isPriceValid) {
+                        addToBasketButton.addEventListener('click', () => {
+                            addProductToBasket(product);
+                        });
+
+                        // Устанавливаем состояние кнопки
+                        if (addedProductIds.has(product.id)) {
+                            addToBasketButton.textContent = 'Добавлено';
+                            addToBasketButton.disabled = true;
+                        }
+                    }
                 });
             }
 
             // Добавляем карточку в галерею
             gallery.appendChild(clone);
+
+            // Устанавливаем состояние кнопки "В корзину" сразу после создания карточки
+            const addToBasketButton = clone.querySelector('.button') as HTMLButtonElement;
+            if (addToBasketButton) {
+                if (!isPriceValid) {
+                    addToBasketButton.textContent = 'Недоступно';
+                    addToBasketButton.disabled = true;
+                } else if (addedProductIds.has(product.id)) {
+                    addToBasketButton.textContent = 'Добавлено';
+                    addToBasketButton.disabled = true;
+                }
+            }
         });
     } catch (error) {
         console.error('Ошибка при загрузке данных:', error);
@@ -103,51 +133,68 @@ const loadProducts = async () => {
 
 // Добавление товара в корзину
 function addProductToBasket(product: IProduct) {
+    // Проверяем, добавлен ли уже товар
+    if (addedProductIds.has(product.id)) return;
+
     // Добавляем товар в корзину
     basket.push(product);
+    addedProductIds.add(product.id); // Добавляем ID в список
+
     updateBasket(); // Обновляем корзину
     updateBasketCounter(); // Обновляем счетчик на кнопке корзины
+
+    // Обновляем состояние кнопки для данного товара
+    updateProductButtonState(product.id);
+}
+
+// Функция обновления состояния кнопки "В корзину"
+function updateProductButtonState(productId: string) {
+    const button = document.querySelector(`.button[data-id="${productId}"]`) as HTMLButtonElement;
+    if (button) {
+        button.textContent = 'Добавлено';
+        button.disabled = true;
+    }
 }
 
 // Обновление корзины
 function updateBasket() {
-  const basketList = document.querySelector('.basket__list') as HTMLElement;
-  if (!basketList) return;
+    const basketList = document.querySelector('.basket__list') as HTMLElement;
+    if (!basketList) return;
 
-  basketList.innerHTML = '';  // Очищаем содержимое корзины перед рендером новых товаров
+    basketList.innerHTML = ''; // Очищаем содержимое корзины перед рендером новых товаров
 
-  let totalPrice = 0;  // Для подсчета общей стоимости
+    let totalPrice = 0; // Для подсчета общей стоимости
 
-  // Добавляем товары в корзину с использованием шаблона
-  basket.forEach((product, index) => {
-      const itemClone = basketTemplate.content.cloneNode(true) as HTMLElement;
+    // Добавляем товары в корзину с использованием шаблона
+    basket.forEach((product, index) => {
+        const itemClone = basketTemplate.content.cloneNode(true) as HTMLElement;
 
-      // Заполняем данные товара в клонированном элементе
-      const itemIndex = itemClone.querySelector('.basket__item-index') as HTMLElement;
-      const itemTitle = itemClone.querySelector('.card__title') as HTMLElement;
-      const itemPrice = itemClone.querySelector('.card__price') as HTMLElement;
-      const deleteButton = itemClone.querySelector('.basket__item-delete') as HTMLButtonElement;
+        // Заполняем данные товара в клонированном элементе
+        const itemIndex = itemClone.querySelector('.basket__item-index') as HTMLElement;
+        const itemTitle = itemClone.querySelector('.card__title') as HTMLElement;
+        const itemPrice = itemClone.querySelector('.card__price') as HTMLElement;
+        const deleteButton = itemClone.querySelector('.basket__item-delete') as HTMLButtonElement;
 
-      itemIndex.textContent = (index + 1).toString();
-      itemTitle.textContent = product.title;
-      itemPrice.textContent = `${product.price} синапсов`;
+        itemIndex.textContent = (index + 1).toString();
+        itemTitle.textContent = product.title;
+        itemPrice.textContent = `${product.price} синапсов`;
 
-      // Добавляем обработчик на удаление товара
-      deleteButton.onclick = () => {
-          removeFromBasket(product.id);
-      };
+        // Добавляем обработчик на удаление товара
+        deleteButton.onclick = () => {
+            removeFromBasket(product.id);
+        };
 
-      // Добавляем товар в список корзины
-      basketList.appendChild(itemClone);
+        // Добавляем товар в список корзины
+        basketList.appendChild(itemClone);
 
-      // Суммируем цену всех товаров
-      totalPrice += product.price;
-  });
+        // Суммируем цену всех товаров
+        totalPrice += product.price || 0;
+    });
 
-  // Обновляем общую стоимость
-  if (basketTotalPrice) {
-      basketTotalPrice.textContent = `Итого: ${totalPrice} синапсов`;
-  }
+    // Обновляем общую стоимость
+    if (basketTotalPrice) {
+        basketTotalPrice.textContent = `Итого: ${totalPrice} синапсов`;
+    }
 }
 
 // Обновление счетчика товаров на кнопке корзины
@@ -157,9 +204,17 @@ function updateBasketCounter() {
 
 // Удаляем товар из корзины
 function removeFromBasket(productId: string) {
-    basket = basket.filter((product) => product.id !== productId);  // Фильтруем корзину
-    updateBasket();  // Перезаполняем корзину после удаления товара
-    updateBasketCounter();  // Обновляем счетчик после удаления товара
+    basket = basket.filter((product) => product.id !== productId); // Фильтруем корзину
+    addedProductIds.delete(productId); // Удаляем ID из списка добавленных товаров
+    updateBasket(); // Перезаполняем корзину после удаления товара
+    updateBasketCounter(); // Обновляем счетчик после удаления товара
+
+    // Обновляем состояние кнопки
+    const button = document.querySelector(`.button[data-id="${productId}"]`) as HTMLButtonElement;
+    if (button) {
+        button.textContent = 'В корзину';
+        button.disabled = false;
+    }
 }
 
 // Событие для открытия корзины
@@ -184,7 +239,7 @@ basketButton.addEventListener('click', () => {
         modalContent.appendChild(modalClone);
 
         // Обновляем корзину с товарами
-        updateBasket();  // Вызываем функцию для обновления списка товаров
+        updateBasket(); // Вызываем функцию для обновления списка товаров
     }
 });
 

@@ -275,19 +275,120 @@ function setupOrderFormEvents(form: HTMLFormElement) {
         submitButton.disabled = !(isAddressValid && isPaymentSelected); // Кнопка активна, если оба условия выполнены
     }
 
-    // Отправка формы
     form.addEventListener('submit', (event) => {
         event.preventDefault();
-
-        if (selectedPaymentMethod) {
-            alert(`Заказ успешно оформлен! Метод оплаты: ${selectedPaymentMethod}, адрес: ${addressInput.value}`);
-        } else {
-            alert('Ошибка: метод оплаты не выбран!');
-        }
+        setupContactsForm(); // Открываем форму с контактами
     });
 }
 
+// Функция для настройки формы контактов
+function setupContactsForm() {
+    // Ищем элемент modal__content
+    const modalContent = document.querySelector('.modal__content') as HTMLElement;
+    if (!modalContent) {
+        console.error('Элемент .modal__content не найден!');
+        return;
+    }
 
+    // Клонируем содержимое шаблона
+    const contactsTemplate = document.getElementById('contacts') as HTMLTemplateElement;
+    if (!contactsTemplate) {
+        console.error('Шаблон формы не найден!');
+        return;
+    }
+
+    const contactsClone = contactsTemplate.content.cloneNode(true) as HTMLElement;
+    modalContent.innerHTML = '';  // Очищаем предыдущее содержимое
+    modalContent.appendChild(contactsClone);  // Вставляем новый шаблон
+
+    // Получаем элементы формы
+    const emailInput = modalContent.querySelector('input[name="email"]') as HTMLInputElement;
+    const phoneInput = modalContent.querySelector('input[name="phone"]') as HTMLInputElement;
+    const submitButton = modalContent.querySelector('button[type="submit"]') as HTMLButtonElement;
+    const errors = modalContent.querySelector('.form__errors') as HTMLSpanElement;
+
+    if (!emailInput || !phoneInput || !submitButton || !errors) {
+        console.error('Не все элементы формы найдены!');
+        return;
+    }
+
+    // Функция валидации
+    function validateForm() {
+        const isEmailValid = validateEmail(emailInput.value);
+        const isPhoneValid = validatePhone(phoneInput.value);
+        submitButton.disabled = !(isEmailValid && isPhoneValid);
+
+        errors.textContent = '';
+        if (!isEmailValid) errors.textContent += 'Введите корректный Email.\n';
+        if (!isPhoneValid) errors.textContent += 'Введите корректный номер телефона.\n';
+    }
+
+    // Валидация Email
+    function validateEmail(email: string): boolean {
+        const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+        return emailPattern.test(email);
+    }
+
+    // Валидация телефона
+    function validatePhone(phone: string): boolean {
+        const phonePattern = /^[\d\s\(\)-]+$/;
+        return phonePattern.test(phone);
+    }
+
+    // Добавляем обработчики событий для ввода данных
+    emailInput.addEventListener('input', validateForm);
+    phoneInput.addEventListener('input', validateForm);
+
+    // Обработчик нажатия на кнопку "Оплатить"
+    submitButton.addEventListener('click', (e) => {
+        e.preventDefault(); // Останавливаем стандартное действие формы
+
+        // Симуляция успешной оплаты
+        setTimeout(() => {
+            replaceModalContentWithSuccess(); // Заменить содержимое модалки на успешный заказ
+        }, 1000); // Для демонстрации задержки, реальная логика может быть асинхронной (например, API)
+    });
+}
+
+// Функция для замены содержимого модального окна на успешное оформление
+function replaceModalContentWithSuccess() {
+    // Ищем элемент modal__content
+    const modalContent = document.querySelector('.modal__content') as HTMLElement;
+    if (!modalContent) {
+        console.error('Элемент .modal__content не найден!');
+        return;
+    }
+
+    // Получаем шаблон успешного оформления
+    const successTemplate = document.getElementById('success') as HTMLTemplateElement;
+    if (!successTemplate) {
+        console.error('Шаблон успешного оформления не найден!');
+        return;
+    }
+
+    // Клонируем содержимое шаблона
+    const successClone = successTemplate.content.cloneNode(true) as HTMLElement;
+
+    // Очищаем содержимое модального окна и вставляем успешное сообщение
+    modalContent.innerHTML = '';  // Очищаем предыдущее содержимое
+    modalContent.appendChild(successClone);  // Вставляем новый шаблон
+
+    // Обновляем описание с суммой в модалке успешного заказа
+    const successDescription = modalContent.querySelector('.order-success__description') as HTMLElement;
+    if (successDescription) {
+        const totalPrice = basket.reduce((total, product) => total + product.price, 0); // Сумма всех товаров в корзине
+        successDescription.textContent = `Списано ${totalPrice} синапсов`;
+    }
+
+    // Получаем кнопку для закрытия
+    const closeButton = modalContent.querySelector('.order-success__close') as HTMLElement;
+    if (closeButton) {
+        closeButton.addEventListener('click', function() {
+            closeModal();
+            clearCart();  // Очищаем корзину
+        });
+    }
+}
 
 // Сохранение корзины в localStorage
 function saveBasketToLocalStorage() {
@@ -308,3 +409,17 @@ window.addEventListener('DOMContentLoaded', () => {
     loadBasketFromLocalStorage();
     loadProducts();
 });
+
+// Функция для закрытия модального окна
+function closeModal() {
+    modal.close();
+}
+
+// Очистка корзины
+function clearCart() {
+    basket = [];
+    addedProductIds.clear();
+    saveBasketToLocalStorage();
+    updateBasket();
+    updateBasketCounter();
+}

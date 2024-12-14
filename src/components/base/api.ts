@@ -1,6 +1,6 @@
 export type ApiListResponse<Type> = {
-    total: number,
-    items: Type[]
+    total: number;
+    items: Type[];
 };
 
 export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
@@ -15,34 +15,35 @@ export class Api {
             headers: {
                 'Content-Type': 'application/json',
                 ...(options.headers as object ?? {})
-            }
+            },
+            ...options,
         };
     }
 
-    // Обновленный метод handleResponse с типизацией
-    protected handleResponse<Type>(response: Response): Promise<ApiListResponse<Type>> {
+    // Универсальный метод обработки ответа
+    protected handleResponse<Type>(response: Response): Promise<Type> {
         if (response.ok) {
-            return response.json();
+            return response.json() as Promise<Type>;
         } else {
             return response.json()
                 .then(data => Promise.reject(data.error ?? response.statusText));
         }
     }
 
-    // Обновленный метод get с типизацией возвращаемого значения
-    get<Type>(uri: string): Promise<ApiListResponse<Type>> {
+    // GET-запрос с поддержкой любых типов ответа
+    get<Type>(uri: string): Promise<Type> {
         return fetch(this.baseUrl + uri, {
             ...this.options,
             method: 'GET'
         }).then(response => this.handleResponse<Type>(response));
     }
 
-    // Метод post остается без изменений
-    post(uri: string, data: object, method: ApiPostMethods = 'POST') {
+    // POST-запрос с поддержкой типизации
+    post<Type>(uri: string, data: object, method: ApiPostMethods = 'POST'): Promise<Type> {
         return fetch(this.baseUrl + uri, {
             ...this.options,
             method,
             body: JSON.stringify(data)
-        }).then(this.handleResponse);
+        }).then(response => this.handleResponse<Type>(response));
     }
 }

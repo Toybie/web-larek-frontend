@@ -7,6 +7,7 @@ import { Modal } from './components/modal';
 // Константы
 export const API_URL = `${process.env.API_ORIGIN}/api/weblarek`;
 export const CDN_URL = `${process.env.API_ORIGIN}/content/weblarek`;
+export const ORDER_API_URL = `${API_URL}/order`;
 
 const api = new Api(API_URL);
 const modal = new Modal('.modal');
@@ -283,72 +284,102 @@ function setupOrderFormEvents(form: HTMLFormElement) {
 
 // Функция для настройки формы контактов
 function setupContactsForm() {
-    // Ищем элемент modal__content
-    const modalContent = document.querySelector('.modal__content') as HTMLElement;
-    if (!modalContent) {
-        console.error('Элемент .modal__content не найден!');
-        return;
-    }
+  const modalContent = document.querySelector('.modal__content') as HTMLElement;
+  if (!modalContent) {
+      console.error('Элемент .modal__content не найден!');
+      return;
+  }
 
-    // Клонируем содержимое шаблона
-    const contactsTemplate = document.getElementById('contacts') as HTMLTemplateElement;
-    if (!contactsTemplate) {
-        console.error('Шаблон формы не найден!');
-        return;
-    }
+  const contactsTemplate = document.getElementById('contacts') as HTMLTemplateElement;
+  if (!contactsTemplate) {
+      console.error('Шаблон формы не найден!');
+      return;
+  }
 
-    const contactsClone = contactsTemplate.content.cloneNode(true) as HTMLElement;
-    modalContent.innerHTML = '';  // Очищаем предыдущее содержимое
-    modalContent.appendChild(contactsClone);  // Вставляем новый шаблон
+  const contactsClone = contactsTemplate.content.cloneNode(true) as HTMLElement;
+  modalContent.innerHTML = '';  // Очищаем предыдущее содержимое
+  modalContent.appendChild(contactsClone);  // Вставляем новый шаблон
 
-    // Получаем элементы формы
-    const emailInput = modalContent.querySelector('input[name="email"]') as HTMLInputElement;
-    const phoneInput = modalContent.querySelector('input[name="phone"]') as HTMLInputElement;
-    const submitButton = modalContent.querySelector('button[type="submit"]') as HTMLButtonElement;
-    const errors = modalContent.querySelector('.form__errors') as HTMLSpanElement;
+  // Проверяем, что элементы формы корректно вставлены
+  const emailInput = modalContent.querySelector('input[name="email"]') as HTMLInputElement;
+  const phoneInput = modalContent.querySelector('input[name="phone"]') as HTMLInputElement;
+  const submitButton = modalContent.querySelector('button[type="submit"]') as HTMLButtonElement;
+  const errors = modalContent.querySelector('.form__errors') as HTMLSpanElement;
 
-    if (!emailInput || !phoneInput || !submitButton || !errors) {
-        console.error('Не все элементы формы найдены!');
-        return;
-    }
+  if (!emailInput || !phoneInput || !submitButton || !errors) {
+      console.error('Не все элементы формы найдены!');
+      return;
+  }
 
-    // Функция валидации
-    function validateForm() {
-        const isEmailValid = validateEmail(emailInput.value);
-        const isPhoneValid = validatePhone(phoneInput.value);
-        submitButton.disabled = !(isEmailValid && isPhoneValid);
+  // Функция валидации
+  function validateForm() {
+      const isEmailValid = validateEmail(emailInput.value);
+      const isPhoneValid = validatePhone(phoneInput.value);
+      submitButton.disabled = !(isEmailValid && isPhoneValid);
 
-        errors.textContent = '';
-        if (!isEmailValid) errors.textContent += 'Введите корректный Email.\n';
-        if (!isPhoneValid) errors.textContent += 'Введите корректный номер телефона.\n';
-    }
+      errors.textContent = '';
+      if (!isEmailValid) errors.textContent += 'Введите корректный Email.\n';
+      if (!isPhoneValid) errors.textContent += 'Введите корректный номер телефона.\n';
+  }
 
-    // Валидация Email
-    function validateEmail(email: string): boolean {
-        const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-        return emailPattern.test(email);
-    }
+  // Валидация Email
+  function validateEmail(email: string): boolean {
+      const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+      return emailPattern.test(email);
+  }
 
-    // Валидация телефона
-    function validatePhone(phone: string): boolean {
-        const phonePattern = /^[\d\s\(\)-]+$/;
-        return phonePattern.test(phone);
-    }
+  // Валидация телефона
+  function validatePhone(phone: string): boolean {
+      const phonePattern = /^[\d\s\(\)-]+$/;
+      return phonePattern.test(phone);
+  }
 
-    // Добавляем обработчики событий для ввода данных
-    emailInput.addEventListener('input', validateForm);
-    phoneInput.addEventListener('input', validateForm);
+  // Добавляем обработчики событий для ввода данных
+  emailInput.addEventListener('input', validateForm);
+  phoneInput.addEventListener('input', validateForm);
 
-    // Обработчик нажатия на кнопку "Оплатить"
-    submitButton.addEventListener('click', (e) => {
-        e.preventDefault(); // Останавливаем стандартное действие формы
+  // Обработчик нажатия на кнопку "Оплатить"
+  submitButton.addEventListener('click', async (e) => {
+      e.preventDefault(); // Останавливаем стандартное действие формы
 
-        // Симуляция успешной оплаты
-        setTimeout(() => {
-            replaceModalContentWithSuccess(); // Заменить содержимое модалки на успешный заказ
-        }, 1000); // Для демонстрации задержки, реальная логика может быть асинхронной (например, API)
-    });
+      // Формируем данные для отправки
+      const formData = {
+          payment: "online", // Это значение фиксированное, как в Postman
+          email: emailInput.value,
+          phone: phoneInput.value,
+          address: "Spb Vosstania 1", // Вы можете заменить на вводимый пользователем адрес
+          total: 2200, // Сумма заказа, нужно заменить на вычисляемое значение
+          items: [
+              "854cef69-976d-4c2a-a18c-2aa45046c390", // Список товаров
+              "c101ab44-ed99-4a54-990d-47aa2bb4e7d9"
+          ]
+      };
+
+      try {
+          const response = await fetch(ORDER_API_URL, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(formData),
+          });
+
+          if (!response.ok) {
+              throw new Error(`Ошибка: ${response.status} ${response.statusText}`);
+          }
+
+          const result = await response.json();
+          console.log('Успешный ответ от сервера:', result);
+
+          replaceModalContentWithSuccess();
+      } catch (error) {
+          console.error('Ошибка при отправке данных:', error);
+          errors.textContent = 'Не удалось отправить данные. Попробуйте еще раз.';
+      }
+  });
 }
+
+
 
 // Функция для замены содержимого модального окна на успешное оформление
 function replaceModalContentWithSuccess() {

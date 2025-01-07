@@ -6,6 +6,9 @@ export type ApiListResponse<Type> = {
 export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
 
 export class Api {
+    createOrder(arg0: { email: string; phone: string; address: string; basket: import("../../types").IProduct[]; }) {
+      throw new Error('Method not implemented.');
+    }
     readonly baseUrl: string;
     protected options: RequestInit;
 

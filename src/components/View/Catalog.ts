@@ -2,20 +2,27 @@ import { Api } from '../base/api';
 import { IProduct } from '/Users/btaub/Desktop/Yandex.Practikum/dev/web-larek-frontend/src/types';
 import { API_URL, CDN_URL } from '/Users/btaub/Desktop/Yandex.Practikum/dev/web-larek-frontend/src/utils/constants';
 import { Modal } from './Modal';
+import { CardModal } from './cardModal';
+import { Basket } from './Basket';
 
 export class Catalog {
     private api: Api;
     private container: HTMLElement;
     private modal: Modal;
+    private cardModal: CardModal;
+    private basket: Basket;
 
-    constructor(container: HTMLElement) {
+    constructor(container: HTMLElement, basket: Basket) {
         this.api = new Api(API_URL);
         this.container = container;
+        this.basket = basket;
 
-        this.modal = new Modal('.modal'); 
+        // Инициализация модальных окон
+        this.modal = new Modal('.modal');
+        this.cardModal = new CardModal('.modal__content');
     }
 
-    // Метод для получения данных товаров с сервера
+    // Загрузка продуктов с сервера
     loadProducts(): void {
         this.api.get<IProduct>('/product')
             .then(response => {
@@ -27,62 +34,62 @@ export class Catalog {
             });
     }
 
-    // Метод для отрисовки карточек товаров
+    // Отрисовка карточек продуктов
     renderProducts(products: IProduct[]): void {
         const catalogTemplate = document.getElementById('card-catalog') as HTMLTemplateElement;
+
+        if (!catalogTemplate) {
+            console.error('Шаблон каталога не найден!');
+            return;
+        }
+
         const fragment = document.createDocumentFragment();
-    
+
         products.forEach(product => {
             const clone = catalogTemplate.content.cloneNode(true) as HTMLElement;
             const cardImage = clone.querySelector('.card__image') as HTMLImageElement;
             const cardTitle = clone.querySelector('.card__title') as HTMLElement;
             const cardCategory = clone.querySelector('.card__category') as HTMLElement;
             const cardPrice = clone.querySelector('.card__price') as HTMLElement;
-    
-            // Устанавливаем данные в карточку
+            const addToBasketButton = clone.querySelector('.card__button') as HTMLButtonElement;
+
+            // Заполнение данных карточки
             cardImage.src = `${CDN_URL}/${product.image}`;
             cardImage.alt = product.title;
             cardTitle.textContent = product.title;
             cardCategory.textContent = product.category;
             cardPrice.textContent = `${product.price ? `${product.price} синапсов` : 'Бесценно'}`;
-    
+
+            // Добавление товара в корзину
+            if (addToBasketButton) {
+                addToBasketButton.addEventListener('click', () => {
+                    this.addProductToBasket(product, addToBasketButton);
+                });
+            }
+
+            // Открытие модального окна товара
             const card = clone.querySelector('.card') as HTMLElement;
             if (card) {
-                console.log('Добавлен обработчик на карточку: ', product.title);
                 card.addEventListener('click', () => {
-                    const content = this.renderProductModalContent(product);
-                    this.modal.setContent(content);
+                    this.cardModal.setContent(product);
                     this.modal.open();
                 });
             }
-    
+
             fragment.appendChild(clone);
         });
-    
+
         this.container.appendChild(fragment);
     }
 
-    // Метод для отрисовки контента для модального окна
-    renderProductModalContent(product: IProduct): HTMLElement {
-        const container = document.createElement('div');
-        container.classList.add('card', 'card_full');
-        const isPriceValid = product.price !== null;
+    // Метод добавления товара в корзину
+    private addProductToBasket(product: IProduct, button: HTMLButtonElement): void {
+        if (this.basket.isProductInBasket(product.id)) return;
 
-        container.innerHTML = `
-            <img class="card__image" src="${CDN_URL}/${product.image}" alt="${product.title}" />
-            <div class="card__column">
-                <span class="card__category card__category_soft">${product.category}</span>
-                <h2 class="card__title">${product.title}</h2>
-                <p class="card__text">${product.description || 'Описание товара отсутствует'}</p>
-                <div class="card__row">
-                    <button class="button" data-id="${product.id}" ${!isPriceValid ? 'disabled' : ''}>
-                        ${!isPriceValid ? 'Недоступно' : 'В корзину'}
-                    </button>
-                    <span class="card__price">${product.price ? `${product.price} синапсов` : 'Бесценно'}</span>
-                </div>
-            </div>
-        `;
+        this.basket.addProduct(product, button); // Добавляем товар в корзину
+        this.basket.updateBasket(); // Обновляем отображение корзины
 
-        return container;
+        button.disabled = true; // Делаем кнопку "В корзину" неактивной
+        button.textContent = 'В корзине';
     }
 }

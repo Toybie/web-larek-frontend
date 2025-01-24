@@ -1,11 +1,14 @@
 import { IProduct } from '/Users/btaub/Desktop/Yandex.Practikum/dev/web-larek-frontend/src/types';
 import { CDN_URL } from '/Users/btaub/Desktop/Yandex.Practikum/dev/web-larek-frontend/src/utils/constants';
+import { Basket } from './Basket';
 
 export class CardModal {
     private modalContent: HTMLElement;
+    private basket: Basket;
 
-    constructor(modalContentSelector: string) {
+    constructor(modalContentSelector: string, basket: Basket) {
         this.modalContent = document.querySelector(modalContentSelector) as HTMLElement;
+        this.basket = basket;
     }
 
     // Метод для установки контента в модальное окно
@@ -14,6 +17,9 @@ export class CardModal {
         container.classList.add('card', 'card_full');
         const isPriceValid = product.price !== null;
 
+        // Проверяем, есть ли товар уже в корзине
+        const isInBasket = this.basket.isProductInBasket(product.id);
+
         container.innerHTML = `
             <img class="card__image" src="${CDN_URL}/${product.image}" alt="${product.title}" />
             <div class="card__column">
@@ -21,15 +27,15 @@ export class CardModal {
                 <h2 class="card__title">${product.title}</h2>
                 <p class="card__text">${product.description || 'Описание товара отсутствует'}</p>
                 <div class="card__row">
-                    <button class="button" data-id="${product.id}" ${!isPriceValid ? 'disabled' : ''}>
-                        ${!isPriceValid ? 'Недоступно' : 'В корзину'}
+                    <button class="button" data-id="${product.id}" ${!isPriceValid || isInBasket ? 'disabled' : ''}>
+                        ${!isPriceValid ? 'Недоступно' : isInBasket ? 'Товар в корзине' : 'В корзину'}
                     </button>
                     <span class="card__price">${product.price ? `${product.price} синапсов` : 'Бесценно'}</span>
                 </div>
             </div>
         `;
-        
-        this.modalContent.innerHTML = ''; // Очищаем предыдущий контент
+
+        this.modalContent.innerHTML = '';
         this.modalContent.appendChild(container);
 
         this.addAddToCartListener(product);
@@ -37,18 +43,14 @@ export class CardModal {
 
     // Метод для добавления обработчика на кнопку "В корзину"
     private addAddToCartListener(product: IProduct): void {
-        const addToCartButton = this.modalContent.querySelector('.button') as HTMLElement;
-        
+        const addToCartButton = this.modalContent.querySelector('.button') as HTMLButtonElement;
+
         if (addToCartButton) {
             addToCartButton.addEventListener('click', () => {
-                this.addToCart(product);
+                this.basket.addProduct(product);
+                addToCartButton.disabled = true;
+                addToCartButton.textContent = 'Добавлено';
             });
         }
-    }
-
-    // Метод для добавления товара в корзину (логика будет определяться позже)
-    private addToCart(product: IProduct): void {
-        console.log('Добавлен товар в корзину:', product.title);
-        // Логика добавления в корзину (можно работать с корзиной, хранить товары в localStorage и т.д.)
     }
 }

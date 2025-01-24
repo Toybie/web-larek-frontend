@@ -1,4 +1,3 @@
-// localStorage.ts
 import { IProduct } from '/Users/btaub/Desktop/Yandex.Practikum/dev/web-larek-frontend/src/types';
 
 // Сохранение корзины в localStorage
@@ -7,7 +6,7 @@ export function saveBasketToLocalStorage(products: IProduct[]): void {
 }
 
 // Загрузка корзины из localStorage
-export function loadBasketFromLocalStorage(): IProduct[] | null {
+export function loadBasketFromLocalStorage(): IProduct[] {
     const storedBasket = localStorage.getItem('basket');
-    return storedBasket ? JSON.parse(storedBasket) : null;
+    return storedBasket ? JSON.parse(storedBasket) : [];
 }

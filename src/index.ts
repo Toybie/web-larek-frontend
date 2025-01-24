@@ -12,7 +12,7 @@ const basketModal = new BasketModal(modal);
 
 // Создаем кнопки и счетчик корзины
 const basketButton = document.querySelector('.header__basket') as HTMLElement;
-const basketCounter = document.querySelector('.header__basket-count') as HTMLElement;
+const basketCounter = document.querySelector('.header__basket-counter') as HTMLElement;
 
 // Создаем экземпляр корзины
 const basket = new Basket(basketButton, basketCounter, basketModal);

@@ -15,7 +15,7 @@ export class BasketModal {
             return;
         }
 
-        this.modal.open(); // Открываем модальное окно корзины
+        this.modal.open();
 
         const modalContent = document.querySelector('.modal__content') as HTMLElement;
         if (!modalContent) {
@@ -23,7 +23,7 @@ export class BasketModal {
             return;
         }
 
-        modalContent.innerHTML = ''; // Очищаем контент модального окна
+        modalContent.innerHTML = '';
 
         const basketTemplate = document.getElementById('basket') as HTMLTemplateElement;
         if (!basketTemplate) {
@@ -35,22 +35,12 @@ export class BasketModal {
         modalContent.appendChild(modalClone);
 
         try {
-            updateBasket(basket); // Обновляем корзину внутри модального окна
+            updateBasket(basket);
         } catch (error) {
             console.error('Ошибка при обновлении корзины:', error);
         }
 
         // Обновляем содержимое модалки и находим кнопку "Оформить"
         const checkoutButton = modalContent.querySelector('.basket__button') as HTMLButtonElement;
-        if (checkoutButton) {
-            checkoutButton.addEventListener('click', () => this.setupOrderForm());
-        } else {
-            console.warn('Кнопка "Оформить" не найдена!');
-        }
-    }
-
-    private setupOrderForm() {
-        // Здесь будет логика оформления заказа, например, форма для ввода данных пользователя.
-        console.log('Оформление заказа...');
     }
 }

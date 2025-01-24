@@ -19,7 +19,7 @@ export class Catalog {
 
         // Инициализация модальных окон
         this.modal = new Modal('.modal');
-        this.cardModal = new CardModal('.modal__content');
+        this.cardModal = new CardModal('.modal__content', this.basket);
     }
 
     // Загрузка продуктов с сервера
@@ -60,13 +60,6 @@ export class Catalog {
             cardCategory.textContent = product.category;
             cardPrice.textContent = `${product.price ? `${product.price} синапсов` : 'Бесценно'}`;
 
-            // Добавление товара в корзину
-            if (addToBasketButton) {
-                addToBasketButton.addEventListener('click', () => {
-                    this.addProductToBasket(product, addToBasketButton);
-                });
-            }
-
             // Открытие модального окна товара
             const card = clone.querySelector('.card') as HTMLElement;
             if (card) {
@@ -80,16 +73,5 @@ export class Catalog {
         });
 
         this.container.appendChild(fragment);
-    }
-
-    // Метод добавления товара в корзину
-    private addProductToBasket(product: IProduct, button: HTMLButtonElement): void {
-        if (this.basket.isProductInBasket(product.id)) return;
-
-        this.basket.addProduct(product, button); // Добавляем товар в корзину
-        this.basket.updateBasket(); // Обновляем отображение корзины
-
-        button.disabled = true; // Делаем кнопку "В корзину" неактивной
-        button.textContent = 'В корзине';
     }
 }

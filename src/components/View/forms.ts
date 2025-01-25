@@ -1,18 +1,18 @@
 import { IProduct } from '/Users/btaub/Desktop/Yandex.Practikum/dev/web-larek-frontend/src/types';
 import { API_URL } from '/Users/btaub/Desktop/Yandex.Practikum/dev/web-larek-frontend/src/utils/constants';
 import { Basket } from './Basket';
-import { Modal } from './Modal'; // Импортируем Modal
+import { Modal } from './Modal';
 
 export class OrderForm {
     private modalContent: HTMLElement;
     private selectedPaymentMethod: string | null = null;
     private basket: Basket;
-    private modal: Modal; // Добавляем поле для Modal
+    private modal: Modal;
 
-    constructor(modalContentSelector: string, basket: Basket, modal: Modal) { // Добавляем modal в конструктор
+    constructor(modalContentSelector: string, basket: Basket, modal: Modal) {
         this.modalContent = document.querySelector(modalContentSelector) as HTMLElement;
         this.basket = basket;
-        this.modal = modal; // Инициализируем modal
+        this.modal = modal;
     }
 
     // Метод для отображения первой формы (способ оплаты и адрес)
@@ -36,13 +36,14 @@ export class OrderForm {
                     </label>
                 </div>
                 <div class="modal__actions">
-                    <button type="submit" class="button">Далее</button>
+                    <button type="submit" class="button" id="next-button" disabled>Далее</button>
                 </div>
             </form>
         `;
 
         this.setupPaymentButtons();
         this.setupFormSubmit();
+        this.setupFormValidation();
     }
 
     // Метод для отображения второй формы (email и телефон)
@@ -62,12 +63,13 @@ export class OrderForm {
                     </label>
                 </div>
                 <div class="modal__actions">
-                    <button type="submit" class="button">Оплатить</button>
+                    <button type="submit" class="button" id="submit-button" disabled>Оплатить</button>
                 </div>
             </form>
         `;
 
         this.setupContactFormSubmit();
+        this.setupContactFormValidation();
     }
 
     // Метод для отображения сообщения об успешной оплате
@@ -95,6 +97,7 @@ export class OrderForm {
                 button.classList.add('button_active');
                 button.style.border = '2px solid white';
                 this.selectedPaymentMethod = button.getAttribute('name') === 'card' ? 'online' : 'cash';
+                this.updateNextButtonState();
             });
         });
     }
@@ -224,9 +227,9 @@ export class OrderForm {
         const closeButton = this.modalContent.querySelector('.order-success__close') as HTMLButtonElement;
         if (closeButton) {
             closeButton.addEventListener('click', () => {
-                localStorage.removeItem('orderFormData'); // Очищаем данные формы
-                this.basket.clearBasket(); // Очищаем корзину
-                this.modal.close(); // Закрываем модальное окно
+                localStorage.removeItem('orderFormData');
+                this.basket.clearBasket();
+                this.modal.close();
             });
         }
     }
@@ -241,5 +244,59 @@ export class OrderForm {
     private loadFormData(): Record<string, any> {
         const savedData = localStorage.getItem('orderFormData');
         return savedData ? JSON.parse(savedData) : {};
+    }
+
+    // Настройка валидации первой формы
+    private setupFormValidation(): void {
+        const addressInput = this.modalContent.querySelector('input[name="address"]') as HTMLInputElement;
+        const nextButton = this.modalContent.querySelector('#next-button') as HTMLButtonElement;
+
+        if (addressInput && nextButton) {
+            // Проверка при изменении поля "Адрес"
+            addressInput.addEventListener('input', () => {
+                this.updateNextButtonState();
+            });
+
+            // Проверка при выборе способа оплаты
+            const paymentButtons = this.modalContent.querySelectorAll('.order__buttons .button') as NodeListOf<HTMLButtonElement>;
+            paymentButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    this.updateNextButtonState();
+                });
+            });
+        }
+    }
+
+    // Обновление состояния кнопки "Далее"
+    private updateNextButtonState(): void {
+        const addressInput = this.modalContent.querySelector('input[name="address"]') as HTMLInputElement;
+        const nextButton = this.modalContent.querySelector('#next-button') as HTMLButtonElement;
+
+        if (addressInput && nextButton) {
+            const isAddressFilled = addressInput.value.trim() !== '';
+            const isPaymentSelected = this.selectedPaymentMethod !== null;
+
+            nextButton.disabled = !(isAddressFilled && isPaymentSelected);
+        }
+    }
+
+    // Настройка валидации второй формы
+    private setupContactFormValidation(): void {
+        const emailInput = this.modalContent.querySelector('input[name="email"]') as HTMLInputElement;
+        const phoneInput = this.modalContent.querySelector('input[name="phone"]') as HTMLInputElement;
+        const submitButton = this.modalContent.querySelector('#submit-button') as HTMLButtonElement;
+
+        if (emailInput && phoneInput && submitButton) {
+            // Проверка при изменении полей
+            const validateForm = () => {
+                const isEmailFilled = emailInput.value.trim() !== '';
+                const isPhoneFilled = phoneInput.value.trim() !== '';
+
+                submitButton.disabled = !(isEmailFilled && isPhoneFilled);
+            };
+
+            emailInput.addEventListener('input', validateForm);
+            phoneInput.addEventListener('input', validateForm);
+        }
     }
 }

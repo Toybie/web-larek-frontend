@@ -8,30 +8,31 @@ import { Basket } from './Basket';
 export class Catalog {
     private api: Api;
     private container: HTMLElement;
-    private modal: Modal;
-    private cardModal: CardModal;
-    private basket: Basket;
+    private basket: Basket | null = null;
+    private modal: Modal; // Добавляем поле для хранения экземпляра Modal
 
-    constructor(container: HTMLElement, basket: Basket) {
+    constructor(container: HTMLElement, modal: Modal) {
         this.api = new Api(API_URL);
         this.container = container;
-        this.basket = basket;
+        this.modal = modal; // Сохраняем экземпляр Modal
+    }
 
-        // Инициализация модальных окон
-        this.modal = new Modal('.modal');
-        this.cardModal = new CardModal('.modal__content', this.basket);
+    // Установка корзины
+    setBasket(basket: Basket): void {
+        this.basket = basket;
     }
 
     // Загрузка продуктов с сервера
-    loadProducts(): void {
-        this.api.get<IProduct>('/product')
-            .then(response => {
-                this.renderProducts(response.items);
-            })
-            .catch((error) => {
-                console.error('Ошибка при загрузке данных:', error);
-                this.container.innerHTML = 'Ошибка загрузки данных. Попробуйте позже.';
-            });
+    async loadProducts(): Promise<IProduct[]> {
+        try {
+            const response = await this.api.get<IProduct>('/product');
+            this.renderProducts(response.items);
+            return response.items; // Возвращаем список товаров
+        } catch (error) {
+            console.error('Ошибка при загрузке данных:', error);
+            this.container.innerHTML = 'Ошибка загрузки данных. Попробуйте позже.';
+            return [];
+        }
     }
 
     // Отрисовка карточек продуктов
@@ -64,8 +65,9 @@ export class Catalog {
             const card = clone.querySelector('.card') as HTMLElement;
             if (card) {
                 card.addEventListener('click', () => {
-                    this.cardModal.setContent(product);
-                    this.modal.open();
+                    const cardModal = new CardModal('.modal__content', this.basket!);
+                    cardModal.setContent(product);
+                    this.modal.open(); // Используем экземпляр Modal
                 });
             }
 

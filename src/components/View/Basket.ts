@@ -9,11 +9,6 @@ export class Basket {
     private basketModal: BasketModal;
 
     constructor(basketButton: HTMLElement, basketCounter: HTMLElement, basketModal: BasketModal) {
-        // Проверяем, что элементы существуют
-        if (!basketButton || !basketCounter) {
-            throw new Error('Элементы корзины не найдены в DOM.');
-        }
-
         this.basketButton = basketButton;
         this.basketCounter = basketCounter;
         this.basketModal = basketModal;
@@ -22,11 +17,19 @@ export class Basket {
         this.products = loadBasketFromLocalStorage();
         this.updateCounter();
         this.updateProductButtons();
+        this.updateCheckoutButton();
 
         // Добавляем обработчик для кнопки корзины
         this.basketButton.addEventListener('click', () => {
-            this.basketModal.openBasketModal(this.products, this.updateBasket.bind(this));
+            if (this.basketModal) {
+                this.basketModal.openBasketModal(this.products, this.updateBasket.bind(this));
+            }
         });
+    }
+
+    // Метод для обновления basketModal
+    setBasketModal(basketModal: BasketModal): void {
+        this.basketModal = basketModal;
     }
 
     // Добавление товара в корзину
@@ -35,18 +38,9 @@ export class Basket {
             this.products.push(product);
             this.updateCounter();
             this.updateProductButtons(product.id);
+            this.updateCheckoutButton();
             saveBasketToLocalStorage(this.products);
         }
-    }
-
-    // Получение списка товаров
-    getProducts(): IProduct[] {
-        return this.products;
-    }
-
-    // Проверка, есть ли продукт в корзине
-    isProductInBasket(productId: string): boolean {
-        return this.products.some((item) => item.id === productId);
     }
 
     // Удаление товара из корзины
@@ -54,7 +48,17 @@ export class Basket {
         this.products = this.products.filter((item) => item.id !== productId);
         this.updateCounter();
         this.updateProductButtons(productId);
+        this.updateCheckoutButton();
         saveBasketToLocalStorage(this.products);
+    }
+
+    getProductsInBasket(): IProduct[] {
+        return this.products;
+    }
+
+    // Проверка, есть ли продукт в корзине
+    isProductInBasket(productId: string): boolean {
+        return this.products.some((item) => item.id === productId);
     }
 
     // Обновление отображения корзины
@@ -65,7 +69,7 @@ export class Basket {
             return;
         }
 
-        basketList.innerHTML = '';
+        basketList.innerHTML = ''; // Очищаем текущий список
 
         const basketTemplate = document.getElementById('card-basket') as HTMLTemplateElement;
         if (!basketTemplate) {
@@ -73,7 +77,6 @@ export class Basket {
             return;
         }
 
-        // Отрисовываем товары в корзине
         this.products.forEach((product, index) => {
             const clone = basketTemplate.content.cloneNode(true) as HTMLElement;
             const itemIndex = clone.querySelector('.basket__item-index') as HTMLElement;
@@ -102,7 +105,7 @@ export class Basket {
             basketList.appendChild(clone);
         });
 
-        // Обновляем общую сумму
+        // Обновляем общую сумму в корзине
         this.updateTotalPrice();
     }
 
@@ -115,34 +118,7 @@ export class Basket {
         }
     }
 
-    // Обновление состояния кнопок на странице
-    private updateProductButtons(productId?: string): void {
-        if (productId) {
-            // Обновляем конкретную кнопку
-            const productButton = document.querySelector(`.button[data-id="${productId}"]`) as HTMLButtonElement;
-            if (productButton) {
-                productButton.disabled = this.isProductInBasket(productId);
-                productButton.textContent = this.isProductInBasket(productId) ? 'Добавлено' : 'В корзину';
-            }
-        } else {
-            // Обновляем все кнопки
-            const productButtons = document.querySelectorAll('.button[data-id]') as NodeListOf<HTMLButtonElement>;
-            productButtons.forEach((button) => {
-                const id = button.dataset.id;
-                if (id) {
-                    button.disabled = this.isProductInBasket(id);
-                    button.textContent = this.isProductInBasket(id) ? 'Добавлено' : 'В корзину';
-                }
-            });
-        }
-    }
-
-    // Расчет общей суммы товаров в корзине
-    private calculateTotalPrice(): number {
-        return this.products.reduce((total, product) => total + (product.price || 0), 0);
-    }
-
-    // Обновление отображения общей суммы
+    // Обновление общей суммы в корзине
     private updateTotalPrice(): void {
         const totalPriceElement = document.querySelector('.basket__price') as HTMLElement;
         if (totalPriceElement) {
@@ -151,5 +127,47 @@ export class Basket {
         } else {
             console.error('Элемент общей суммы не найден.');
         }
+    }
+
+    // Расчет общей суммы заказа
+    private calculateTotalPrice(): number {
+        return this.products.reduce((total, product) => total + (product.price || 0), 0);
+    }
+
+    // Обновление состояния кнопок на странице
+    private updateProductButtons(productId?: string): void {
+        if (productId) {
+            const productButton = document.querySelector(`.button[data-id="${productId}"]`) as HTMLButtonElement;
+            if (productButton) {
+                productButton.disabled = this.isProductInBasket(productId);
+                productButton.textContent = this.isProductInBasket(productId) ? 'Товар в корзине' : 'В корзину';
+            }
+        } else {
+            const productButtons = document.querySelectorAll('.button[data-id]') as NodeListOf<HTMLButtonElement>;
+            productButtons.forEach((button) => {
+                const id = button.dataset.id;
+                if (id) {
+                    button.disabled = this.isProductInBasket(id);
+                    button.textContent = this.isProductInBasket(id) ? 'Товар в корзине' : 'В корзину';
+                }
+            });
+        }
+    }
+
+    // Обновление состояния кнопки "Оформить"
+    private updateCheckoutButton(): void {
+        const checkoutButton = document.querySelector('.basket__button') as HTMLButtonElement;
+        if (checkoutButton) {
+            checkoutButton.disabled = this.products.length === 0;
+        }
+    }
+
+     // Метод для очистки корзины
+     clearBasket(): void {
+        this.products = []; // Очищаем массив продуктов
+        this.updateCounter(); // Обновляем счетчик
+        this.updateProductButtons(); // Обновляем кнопки товаров
+        this.updateCheckoutButton(); // Обновляем кнопку "Оформить"
+        saveBasketToLocalStorage(this.products); // Сохраняем пустую корзину в localStorage
     }
 }

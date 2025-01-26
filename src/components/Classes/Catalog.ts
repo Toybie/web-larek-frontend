@@ -9,12 +9,12 @@ export class Catalog {
     private api: Api;
     private container: HTMLElement;
     private basket: Basket | null = null;
-    private modal: Modal; // Добавляем поле для хранения экземпляра Modal
+    private modal: Modal;
 
     constructor(container: HTMLElement, modal: Modal) {
         this.api = new Api(API_URL);
         this.container = container;
-        this.modal = modal; // Сохраняем экземпляр Modal
+        this.modal = modal; 
     }
 
     // Установка корзины
@@ -27,7 +27,7 @@ export class Catalog {
         try {
             const response = await this.api.get<IProduct>('/product');
             this.renderProducts(response.items);
-            return response.items; // Возвращаем список товаров
+            return response.items;
         } catch (error) {
             console.error('Ошибка при загрузке данных:', error);
             this.container.innerHTML = 'Ошибка загрузки данных. Попробуйте позже.';
@@ -67,7 +67,7 @@ export class Catalog {
                 card.addEventListener('click', () => {
                     const cardModal = new CardModal('.modal__content', this.basket!);
                     cardModal.setContent(product);
-                    this.modal.open(); // Используем экземпляр Modal
+                    this.modal.open();
                 });
             }
 

@@ -69,7 +69,7 @@ export class Basket {
             return;
         }
 
-        basketList.innerHTML = ''; // Очищаем текущий список
+        basketList.innerHTML = '';
 
         const basketTemplate = document.getElementById('card-basket') as HTMLTemplateElement;
         if (!basketTemplate) {
@@ -164,10 +164,10 @@ export class Basket {
 
      // Метод для очистки корзины
      clearBasket(): void {
-        this.products = []; // Очищаем массив продуктов
-        this.updateCounter(); // Обновляем счетчик
-        this.updateProductButtons(); // Обновляем кнопки товаров
-        this.updateCheckoutButton(); // Обновляем кнопку "Оформить"
-        saveBasketToLocalStorage(this.products); // Сохраняем пустую корзину в localStorage
+        this.products = [];
+        this.updateCounter(); 
+        this.updateProductButtons();
+        this.updateCheckoutButton();
+        saveBasketToLocalStorage(this.products);
     }
 }

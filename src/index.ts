@@ -1,8 +1,8 @@
 import './scss/styles.scss';
-import { Catalog } from './components/View/Catalog';
-import { Modal } from './components/View/Modal';
-import { BasketModal } from './components/View/basketModal';
-import { Basket } from './components/View/Basket';
+import { Catalog } from './components/Classes/Catalog';
+import { Modal } from './components/Classes/Modal';
+import { BasketModal } from './components/Classes/basketModal';
+import { Basket } from './components/Classes/Basket';
 import { IProduct } from './types';
 
 // Инициализация модального окна

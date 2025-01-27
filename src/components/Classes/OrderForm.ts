@@ -1,5 +1,4 @@
-import { IProduct } from '/Users/btaub/Desktop/Yandex.Practikum/dev/web-larek-frontend/src/types';
-import { API_URL } from '/Users/btaub/Desktop/Yandex.Practikum/dev/web-larek-frontend/src/utils/constants';
+import { API_URL } from '../../utils/constants';
 import { Basket } from './Basket';
 import { Modal } from './Modal';
 

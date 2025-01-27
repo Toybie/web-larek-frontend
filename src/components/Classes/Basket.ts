@@ -1,4 +1,4 @@
-import { IProduct } from '/Users/btaub/Desktop/Yandex.Practikum/dev/web-larek-frontend/src/types';
+import { IProduct } from '../../types';
 import { BasketModal } from './basketModal';
 import { saveBasketToLocalStorage, loadBasketFromLocalStorage } from './localStorage';
 

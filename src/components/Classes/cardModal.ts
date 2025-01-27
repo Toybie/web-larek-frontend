@@ -1,5 +1,5 @@
-import { IProduct } from '/Users/btaub/Desktop/Yandex.Practikum/dev/web-larek-frontend/src/types';
-import { CDN_URL } from '/Users/btaub/Desktop/Yandex.Practikum/dev/web-larek-frontend/src/utils/constants';
+import { IProduct } from '../../types';
+import { CDN_URL } from '../../utils/constants';
 import { Basket } from './Basket';
 
 export class CardModal {

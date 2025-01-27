@@ -1,5 +1,5 @@
 import { Modal } from './Modal';
-import { IProduct } from '/Users/btaub/Desktop/Yandex.Practikum/dev/web-larek-frontend/src/types';
+import { IProduct } from '../../types';
 import { OrderForm } from './OrderForm';
 import { Basket } from './Basket';
 

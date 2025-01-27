@@ -17,4 +17,9 @@
     @include mixins.button(white, $primaryLight, $primaryLight);
     border: $hoverBorder;
   }
+
+  // Добавляем стиль для активной кнопки
+  &_active {
+    border: solid 2px white !important;
+  }
 }

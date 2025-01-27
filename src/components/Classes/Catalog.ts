@@ -1,6 +1,6 @@
 import { Api } from '../base/api';
-import { IProduct } from '/Users/btaub/Desktop/Yandex.Practikum/dev/web-larek-frontend/src/types';
-import { API_URL, CDN_URL } from '/Users/btaub/Desktop/Yandex.Practikum/dev/web-larek-frontend/src/utils/constants';
+import { IProduct } from '../../types';
+import { API_URL, CDN_URL } from '../../utils/constants';
 import { Modal } from './Modal';
 import { CardModal } from './cardModal';
 import { Basket } from './Basket';

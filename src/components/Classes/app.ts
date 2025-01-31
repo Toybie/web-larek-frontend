@@ -1,57 +1,34 @@
-import { Catalog } from './Catalog';
 import { Modal } from './Modal';
+import { Catalog } from './Catalog';
 import { BasketModal } from './basketModal';
 import { Basket } from './Basket';
-import { CardModal } from './cardModal';
+import { Page } from './Page';
 
-class App {
-    private catalog: Catalog;
-    private basket: Basket;
-    private modal: Modal;
-    private basketModal: BasketModal;
-    private cardModal: CardModal;
+// Инициализация страницы
+const page = new Page();
 
-    constructor() {
-        // Инициализация модального окна
-        this.modal = new Modal('.modal');
+// Инициализация модального окна
+const modal = new Modal('.modal');
 
-        // Инициализация корзины
-        const basketButton = document.querySelector('.header__basket') as HTMLElement;
-        const basketCounter = document.querySelector('.header__basket-count') as HTMLElement;
+// Инициализация каталога
+const catalog = new Catalog(page.getCatalogContainer(), modal);
 
-        // Создаем экземпляр Basket с временным значением null для basketModal
-        this.basket = new Basket(basketButton, basketCounter, null);
+// Инициализация корзины
+const basket = new Basket(page.getBasketButton(), page, null); // Передаем объект `page`
 
-        // Создаем экземпляр BasketModal и передаем туда модальное окно и корзину
-        this.basketModal = new BasketModal(this.modal, this.basket);
+// Передаем корзину в каталог
+catalog.setBasket(basket);
 
-        // Обновляем basketModal в корзине
-        this.basket.setBasketModal(this.basketModal);
+// Инициализация модального окна корзины
+const basketModal = new BasketModal(modal, basket);
 
-        // Инициализация модального окна карточки товара
-        this.cardModal = new CardModal('.modal__content', this.basket);
+// Обновляем basketModal в корзине
+basket.setBasketModal(basketModal);
 
-        // Инициализация каталога
-        const catalogContainer = document.querySelector('.gallery') as HTMLElement;
-        this.catalog = new Catalog(catalogContainer, this.modal);
+// Загружаем товары
+catalog.loadAndRenderProducts();
 
-        // Загрузка товаров
-        this.catalog.loadProducts();
-
-        // Настройка обработчиков событий
-        this.setupEventListeners();
-    }
-
-    private setupEventListeners(): void {
-        // Обработчик для закрытия модального окна
-        const closeButton = document.querySelector('.modal__close') as HTMLElement;
-        if (closeButton) {
-            closeButton.addEventListener('click', () => {
-                this.modal.close();
-            });
-        }
-    }
-}
-
-// Запуск приложения
-new App();
+// Добавляем обработчик клика на кнопку корзины
+page.addBasketButtonClickHandler(() => {
+    basketModal.openBasketModal(basket.getProductsInBasket(), basket.updateBasket.bind(basket));
+});

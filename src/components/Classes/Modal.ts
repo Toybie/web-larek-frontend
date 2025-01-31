@@ -1,5 +1,6 @@
 export class Modal {
     private modalElement: HTMLElement;
+    private isOpen: boolean = false;
 
     constructor(modalSelector: string) {
         this.modalElement = document.querySelector(modalSelector) as HTMLElement;
@@ -17,22 +18,44 @@ export class Modal {
                 this.close();
             }
         });
+    }
 
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') {
-                this.close();
-            }
-        });
+    private toggleModal(state: boolean) {
+        this.modalElement.classList.toggle('modal_active', state);
+        this.toggleBodyOverflow(state);
+        this.isOpen = state;
+
+        if (state) {
+            document.addEventListener('keydown', this.handleEscape);
+        } else {
+            document.removeEventListener('keydown', this.handleEscape);
+        }
+    }
+
+    private toggleBodyOverflow(state: boolean) {
+        document.body.style.overflow = state ? 'hidden' : '';
+    }
+
+    private handleEscape = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+            this.close();
+        }
+    };
+
+    getElement(): HTMLElement {
+        return this.modalElement;
     }
 
     open() {
-        this.modalElement.classList.add('modal_active');
-        document.body.style.overflow = 'hidden';
+        if (!this.isOpen) {
+            this.toggleModal(true);
+        }
     }
 
     close() {
-        this.modalElement.classList.remove('modal_active');
-        document.body.style.overflow = '';
+        if (this.isOpen) {
+            this.toggleModal(false);
+        }
     }
 
     setContent(content: HTMLElement | string) {

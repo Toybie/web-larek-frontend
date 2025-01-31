@@ -1,17 +1,18 @@
-import { API_URL } from '../../utils/constants';
+import { AppApi } from './AppApi';
 import { Basket } from './Basket';
 import { Modal } from './Modal';
 
 export class OrderForm {
     private modalContent: HTMLElement;
-    private selectedPaymentMethod: string | null = null;
     private basket: Basket;
     private modal: Modal;
+    private appApi: AppApi;
 
     constructor(modalContentSelector: string, basket: Basket, modal: Modal) {
         this.modalContent = document.querySelector(modalContentSelector) as HTMLElement;
         this.basket = basket;
         this.modal = modal;
+        this.appApi = new AppApi();
     }
 
     renderForm(): void {
@@ -36,8 +37,9 @@ export class OrderForm {
                 </div>
             </form>
         `;
-        this.setupForm('#order-form', this.handleFormSubmit.bind(this));
         this.setupPaymentButtons();
+        this.setupFormValidation('#order-form', '#next-button');
+        this.setupFormSubmit('#order-form', this.handleFormSubmit.bind(this));
     }
 
     renderContactForm(): void {
@@ -59,7 +61,8 @@ export class OrderForm {
                 </div>
             </form>
         `;
-        this.setupForm('#contact-form', this.handleContactFormSubmit.bind(this));
+        this.setupFormValidation('#contact-form', '#submit-button');
+        this.setupFormSubmit('#contact-form', this.handleContactFormSubmit.bind(this));
     }
 
     renderSuccessMessage(totalPrice: number): void {
@@ -75,80 +78,80 @@ export class OrderForm {
 
     private setupPaymentButtons(): void {
         const paymentButtons = this.modalContent.querySelectorAll('.order__buttons .button');
-        paymentButtons.forEach(button => button.addEventListener('click', () => {
-            paymentButtons.forEach(btn => btn.classList.remove('button_active'));
-            button.classList.add('button_active');
-            this.selectedPaymentMethod = button.getAttribute('name') === 'card' ? 'online' : 'cash';
-            this.updateNextButtonState();
-        }));
+        let selectedPaymentMethod: string | null = null;
+
+        paymentButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                paymentButtons.forEach(btn => btn.classList.remove('button_active'));
+                button.classList.add('button_active');
+                selectedPaymentMethod = button.getAttribute('name') === 'card' ? 'online' : 'cash';
+                this.updateNextButtonState(selectedPaymentMethod);
+            });
+        });
     }
 
-    private setupForm(formSelector: string, handler: (form: HTMLFormElement) => void): void {
+    private updateNextButtonState(paymentMethod: string | null): void {
+        const addressInput = this.modalContent.querySelector('input[name="address"]') as HTMLInputElement;
+        const nextButton = this.modalContent.querySelector('#next-button') as HTMLButtonElement;
+        if (addressInput && nextButton) {
+            nextButton.disabled = !(addressInput.value.trim() !== '' && paymentMethod !== null);
+        }
+    }
+
+    private setupFormValidation(formSelector: string, submitButtonSelector: string): void {
+        const form = this.modalContent.querySelector(formSelector) as HTMLFormElement;
+        const inputs = form?.querySelectorAll('input[required]');
+        const submitButton = form?.querySelector(submitButtonSelector) as HTMLButtonElement;
+
+        if (inputs && submitButton) {
+            const validateForm = () => {
+                submitButton.disabled = !Array.from(inputs).every(input => (input as HTMLInputElement).value.trim() !== '');
+            };
+            inputs.forEach(input => input.addEventListener('input', validateForm));
+            validateForm(); // Инициализация состояния кнопки
+        }
+    }
+
+    private setupFormSubmit(formSelector: string, handler: (formData: Record<string, any>) => void): void {
         const form = this.modalContent.querySelector(formSelector) as HTMLFormElement;
         form?.addEventListener('submit', event => {
             event.preventDefault();
-            handler(form);
+            const formData = new FormData(form);
+            const data: Record<string, any> = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+            handler(data);
         });
-        this.setupFormValidation(formSelector);
     }
 
-    private handleFormSubmit(form: HTMLFormElement): void {
-        const formData = new FormData(form);
-        const address = formData.get('address') as string;
-        if (!this.selectedPaymentMethod || !address) {
+    private handleFormSubmit(formData: Record<string, any>): void {
+        const paymentMethod = this.modalContent.querySelector('.button_active')?.getAttribute('name');
+        if (!paymentMethod || !formData.address) {
             alert('Пожалуйста, выберите способ оплаты и укажите адрес доставки.');
             return;
         }
-        this.saveFormData({ paymentMethod: this.selectedPaymentMethod, address });
+
+        this.saveFormData({ paymentMethod, ...formData });
         this.renderContactForm();
     }
 
-    private handleContactFormSubmit(form: HTMLFormElement): void {
-        const formData = new FormData(form);
-        const email = formData.get('email') as string;
-        const phone = formData.get('phone') as string;
-        if (!email || !phone) {
-            alert('Пожалуйста, заполните все поля.');
-            return;
-        }
-        this.saveFormData({ email, phone });
-        this.submitOrder();
-    }
-
-    private async submitOrder(): Promise<void> {
-        const orderData = this.loadFormData();
+    private async handleContactFormSubmit(formData: Record<string, any>): Promise<void> {
+        const savedData = this.loadFormData();
         const totalPrice = this.calculateTotalPrice();
         const requestData = {
-            payment: orderData.paymentMethod,
-            email: orderData.email,
-            phone: orderData.phone,
-            address: orderData.address,
+            payment: savedData.paymentMethod,
+            email: formData.email,
+            phone: formData.phone,
+            address: savedData.address,
             total: totalPrice,
             items: this.getProductIds(),
         };
 
         try {
-            const response = await fetch(`${API_URL}/order`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestData),
-            });
-
-            if (!response.ok) {
-                const errorResponse = await response.json();
-                if (errorResponse.error.includes('не продается')) {
-                    const unavailableProductId = errorResponse.error.split(' ')[3];
-                    this.basket.removeProduct(unavailableProductId);
-                    alert('Некоторые товары недоступны для покупки. Они были удалены из корзины.');
-                    return;
-                }
-                throw new Error('Ошибка при отправке заказа');
-            }
-
-            const result = await response.json();
+            await this.appApi.submitOrder(requestData);
             this.renderSuccessMessage(totalPrice);
         } catch (error) {
-            console.error('Ошибка:', error);
             alert('Не удалось отправить заказ. Пожалуйста, попробуйте ещё раз.');
         }
     }
@@ -176,26 +179,5 @@ export class OrderForm {
 
     private loadFormData(): Record<string, any> {
         return JSON.parse(localStorage.getItem('orderFormData') || '{}');
-    }
-
-    private setupFormValidation(formSelector: string): void {
-        const form = this.modalContent.querySelector(formSelector) as HTMLFormElement;
-        const inputs = form?.querySelectorAll('input[required]');
-        const submitButton = form?.querySelector('button[type="submit"]') as HTMLButtonElement;
-
-        if (inputs && submitButton) {
-            const validateForm = () => {
-                submitButton.disabled = !Array.from(inputs).every(input => (input as HTMLInputElement).value.trim() !== '');
-            };
-            inputs.forEach(input => input.addEventListener('input', validateForm));
-        }
-    }
-
-    private updateNextButtonState(): void {
-        const addressInput = this.modalContent.querySelector('input[name="address"]') as HTMLInputElement;
-        const nextButton = this.modalContent.querySelector('#next-button') as HTMLButtonElement;
-        if (addressInput && nextButton) {
-            nextButton.disabled = !(addressInput.value.trim() !== '' && this.selectedPaymentMethod !== null);
-        }
     }
 }

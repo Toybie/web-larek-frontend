@@ -1,6 +1,6 @@
-import { AppApi } from './AppApi';
-import { Basket } from './Basket';
-import { Modal } from './Modal';
+import { AppApi } from '../AppApi';
+import { Basket } from '../Basket/Basket';
+import { Modal } from '../Modal';
 
 export class OrderForm {
     private modalContent: HTMLElement;
@@ -108,7 +108,7 @@ export class OrderForm {
                 submitButton.disabled = !Array.from(inputs).every(input => (input as HTMLInputElement).value.trim() !== '');
             };
             inputs.forEach(input => input.addEventListener('input', validateForm));
-            validateForm(); // Инициализация состояния кнопки
+            validateForm();
         }
     }
 
@@ -147,13 +147,26 @@ export class OrderForm {
             total: totalPrice,
             items: this.getProductIds(),
         };
-
+    
         try {
             await this.appApi.submitOrder(requestData);
+    
+            this.basket.clearBasket();
+            this.resetCardStates();
             this.renderSuccessMessage(totalPrice);
         } catch (error) {
             alert('Не удалось отправить заказ. Пожалуйста, попробуйте ещё раз.');
         }
+    }
+    
+    private resetCardStates(): void {
+        const cards = document.querySelectorAll('.gallery__item.card');
+        cards.forEach((card) => {
+            const button = card.querySelector('.card__button') as HTMLButtonElement;
+            if (button) {
+                button.textContent = 'Добавить в корзину';
+            }
+        });
     }
 
     private calculateTotalPrice(): number {
@@ -168,7 +181,6 @@ export class OrderForm {
         const closeButton = this.modalContent.querySelector('.order-success__close') as HTMLButtonElement;
         closeButton?.addEventListener('click', () => {
             localStorage.removeItem('orderFormData');
-            this.basket.clearBasket();
             this.modal.close();
         });
     }

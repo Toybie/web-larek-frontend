@@ -1,9 +1,9 @@
 import './scss/styles.scss';
 import { Modal } from './components/Classes/Modal';
-import { Catalog } from './components/Classes/Catalog';
-import { BasketModal } from './components/Classes/basketModal';
-import { Basket } from './components/Classes/Basket';
-import { Page } from './components/Classes/Page';
+import { Catalog } from './components/Classes/Gallery/Catalog';
+import { BasketModal } from './components/Classes/Basket/basketModal';
+import { Basket } from './components/Classes/Basket/Basket';
+import { Page } from './components/Classes/Gallery/Page';
 
 // Инициализация страницы
 const page = new Page();

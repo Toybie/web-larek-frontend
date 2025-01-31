@@ -1,7 +1,7 @@
-import { IProduct } from '../../types';
-import { saveBasketToLocalStorage, loadBasketFromLocalStorage } from './localStorage';
-import { BaseBasket } from './BaseBasket';
-import { Page } from './Page';
+import { IProduct } from '../../../types';
+import { saveBasketToLocalStorage, loadBasketFromLocalStorage } from '../localStorage';
+import { BaseBasket } from '../Basket/BaseBasket';
+import { Page } from '../Gallery/Page';
 
 export class Basket extends BaseBasket {
     private products: IProduct[] = [];
@@ -12,7 +12,7 @@ export class Basket extends BaseBasket {
     constructor(basketButton: HTMLElement, page: Page, basketModal: any) {
         super();
         this.basketButton = basketButton;
-        this.basketCounter = page.getBasketCounter(); // Используем метод getBasketCounter из объекта `page`
+        this.basketCounter = page.getBasketCounter();
         this.products = loadBasketFromLocalStorage();
         this.updateCounter();
         this.updateCheckoutButton(this.products);

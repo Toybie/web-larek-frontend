@@ -1,9 +1,9 @@
-import { Modal } from './Modal';
-import { Basket } from './Basket';
-import { ProductService } from './ProductService';
+import { Modal } from '../Modal';
+import { Basket } from '../Basket/Basket';
+import { ProductService } from '../ProductService';
 import { ProductRenderer } from './ProductRenderer';
-import { CardModal } from './cardModal';
-import { IProduct } from '../../types';
+import { CardModal } from '../Card/cardModal';
+import { IProduct } from '../../../types';
 
 export class Catalog {
     private container: HTMLElement;

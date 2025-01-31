@@ -1,8 +1,8 @@
 import { Modal } from './Modal';
-import { Catalog } from './Catalog';
-import { BasketModal } from './basketModal';
-import { Basket } from './Basket';
-import { Page } from './Page';
+import { Catalog } from './Gallery/Catalog';
+import { BasketModal } from './Basket/basketModal';
+import { Basket } from './Basket/Basket';
+import { Page } from './Gallery/Page';
 
 // Инициализация страницы
 const page = new Page();
@@ -14,7 +14,7 @@ const modal = new Modal('.modal');
 const catalog = new Catalog(page.getCatalogContainer(), modal);
 
 // Инициализация корзины
-const basket = new Basket(page.getBasketButton(), page, null); // Передаем объект `page`
+const basket = new Basket(page.getBasketButton(), page, null);
 
 // Передаем корзину в каталог
 catalog.setBasket(basket);

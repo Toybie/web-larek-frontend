@@ -1,4 +1,4 @@
-import { IProduct } from '../../types';
+import { IProduct } from '../../../types';
 
 export abstract class BaseBasket {
     protected basketList: HTMLElement | null = null;

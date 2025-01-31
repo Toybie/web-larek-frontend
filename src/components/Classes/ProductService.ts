@@ -9,7 +9,6 @@ export class ProductService {
         this.api = new Api(API_URL);
     }
 
-    // Метод для загрузки продуктов
     async fetchProducts(): Promise<IProduct[]> {
         try {
             const response = await this.api.get<IProduct>('/product');

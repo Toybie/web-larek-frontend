@@ -1,6 +1,6 @@
-import { IProduct } from '../../types';
-import { CDN_URL } from '../../utils/constants';
-import { Basket } from './Basket';
+import { IProduct } from '../../../types';
+import { CDN_URL } from '../../../utils/constants';
+import { Basket } from '../Basket/Basket';
 
 export class CardModal {
     private modalContent: HTMLElement;
@@ -11,13 +11,11 @@ export class CardModal {
         this.basket = basket;
     }
 
-    // Метод для установки контента в модальное окно
     setContent(product: IProduct): void {
         const container = document.createElement('div');
         container.classList.add('card', 'card_full');
         const isPriceValid = product.price !== null;
 
-        // Проверяем, есть ли товар уже в корзине
         const isInBasket = this.basket.isProductInBasket(product.id);
 
         container.innerHTML = `
@@ -41,7 +39,6 @@ export class CardModal {
         this.addAddToCartListener(product);
     }
 
-    // Метод для добавления обработчика на кнопку "В корзину"
     private addAddToCartListener(product: IProduct): void {
         const addToCartButton = this.modalContent.querySelector('.button') as HTMLButtonElement;
 

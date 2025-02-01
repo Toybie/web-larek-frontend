@@ -39,6 +39,27 @@ export class OrderForm {
         this.setupSuccessCloseButton();
     }
 
+    private setupPaymentButtons(validateForm: () => void): void {
+        const paymentButtons = document.querySelectorAll('.order__buttons .button');
+        let selectedPaymentMethod: string | null = null;
+
+        paymentButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Убираем активный класс у всех кнопок
+                paymentButtons.forEach(btn => btn.classList.remove('button_active'));
+
+                // Добавляем активный класс к выбранной кнопке
+                button.classList.add('button_active');
+
+                // Сохраняем выбранный способ оплаты
+                selectedPaymentMethod = button.getAttribute('name') === 'card' ? 'online' : 'cash';
+
+                // Обновляем состояние кнопки "Далее"
+                validateForm();
+            });
+        });
+    }
+
     private setupFormValidation(formSelector: string, submitButtonSelector: string): void {
         const formManager = new FormManager(formSelector);
         const submitButton = document.querySelector(submitButtonSelector) as HTMLButtonElement;
@@ -62,11 +83,8 @@ export class OrderForm {
             // Добавляем обработчики событий для полей формы
             formManager.setupValidation(submitButtonSelector);
 
-            // Добавляем обработчик события для кнопок выбора способа оплаты
-            const paymentButtons = document.querySelectorAll('.order__buttons .button');
-            paymentButtons.forEach(button => {
-                button.addEventListener('click', validateForm);
-            });
+            // Настройка кнопок выбора способа оплаты
+            this.setupPaymentButtons(validateForm);
 
             // Инициализируем состояние кнопки при загрузке
             validateForm();

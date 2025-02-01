@@ -1,21 +1,21 @@
 import { Modal } from '../Modal';
 import { Basket } from '../Basket/Basket';
-import { ProductService } from '../ProductService';
 import { ProductRenderer } from './ProductRenderer';
 import { CardModal } from '../Card/cardModal';
+import { ProductLoader } from './ProductLoader';
 import { IProduct } from '../../../types';
 
 export class Catalog {
     private container: HTMLElement;
     private modal: Modal;
     private basket: Basket | null = null;
-    private productService: ProductService;
+    private productLoader: ProductLoader;
     private productRenderer: ProductRenderer;
 
     constructor(container: HTMLElement, modal: Modal) {
         this.container = container;
         this.modal = modal;
-        this.productService = new ProductService();
+        this.productLoader = new ProductLoader();
         this.productRenderer = new ProductRenderer(container);
 
         this.container.addEventListener('product:selected', (event: Event) => {
@@ -37,18 +37,9 @@ export class Catalog {
         this.basket = basket;
     }
 
-    async loadProducts(): Promise<IProduct[]> {
-        try {
-            return await this.productService.fetchProducts();
-        } catch (error) {
-            console.error('Ошибка при загрузке данных:', error);
-            throw error;
-        }
-    }
-
     async loadAndRenderProducts(): Promise<void> {
         try {
-            const products = await this.loadProducts();
+            const products = await this.productLoader.loadProducts();
             this.productRenderer.render(products);
         } catch (error) {
             console.error('Ошибка при загрузке данных:', error);

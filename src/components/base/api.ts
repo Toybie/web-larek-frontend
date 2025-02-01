@@ -12,7 +12,7 @@ export class Api {
     constructor(baseUrl: string, options: RequestInit = {}) {
         this.baseUrl = baseUrl;
         this.options = {
-            headers: {
+            headers: {  
                 'Content-Type': 'application/json',
                 ...(options.headers as object ?? {})
             }

@@ -30,5 +30,5 @@ catalog.loadAndRenderProducts();
 
 // Добавляем обработчик клика на кнопку корзины
 page.addBasketButtonClickHandler(() => {
-    basketModal.openBasketModal(basket.getProductsInBasket(), basket.updateBasket.bind(basket));
+    basketModal.openBasketModal();
 });

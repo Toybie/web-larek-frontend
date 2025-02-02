@@ -12,24 +12,25 @@ export class BasketModal extends BaseBasket {
     constructor(modal: Modal, basket: Basket) {
         super();
         this.modal = modal;
-        this.basket = basket; 
+        this.basket = basket;
         this.orderForm = new OrderForm('.modal__content', basket, modal);
     }
 
+    /**
+     * Рендеринг товаров в корзине.
+     */
     private renderBasketItems(basket: IProduct[]): void {
         const basketList = document.querySelector('.basket__list') as HTMLElement;
-
         if (!basketList) {
             console.error('Список товаров корзины не найден.');
             return;
         }
 
-        basketList.innerHTML = '';
+        basketList.innerHTML = ''; // Очищаем список перед рендерингом
 
         basket.forEach((product, index) => {
             const item = document.createElement('li');
             item.className = 'basket__item card card_compact';
-
             item.innerHTML = `
                 <span class="basket__item-index">${index + 1}</span>
                 <span class="card__title">${product.title}</span>
@@ -40,45 +41,62 @@ export class BasketModal extends BaseBasket {
             const deleteButton = item.querySelector('.basket__item-delete') as HTMLButtonElement;
             deleteButton.addEventListener('click', () => {
                 this.basket.removeProduct(product.id);
-                this.openBasketModal(this.basket.getProductsInBasket(), this.basket.updateBasket.bind(this)); 
+                this.updateBasketUI(); // Обновляем UI после удаления товара
             });
 
             basketList.appendChild(item);
         });
     }
 
-    openBasketModal(basket: IProduct[] = [], updateBasket: (basket: IProduct[]) => void): void {
-        if (!Array.isArray(basket)) {
-            console.error('Ошибка: передана некорректная корзина. Ожидается массив.');
-            return;
-        }
-    
+    /**
+     * Открывает модальное окно корзины.
+     */
+    openBasketModal(): void {
         this.modal.open();
         this.renderTemplate('basket', '.modal__content');
-    
+
         try {
-            updateBasket(basket);
+            this.updateBasketUI(); // Вызываем обновление UI
         } catch (error) {
             console.error('Ошибка при обновлении корзины:', error);
         }
-    
-        this.updateCheckoutButton(basket);
-        this.renderBasketItems(basket);
-        this.updateTotalPrice(basket);
-    
+    }
+
+    /**
+     * Обновляет интерфейс корзины (товары, кнопки, цена).
+     */
+    private updateBasketUI(): void {
+        const basket = this.basket.getProductsInBasket();
+
+        this.renderBasketItems(basket); // Рендерим товары
+        this.updateTotalPrice(basket); // Обновляем общую цену
+        this.updateCheckoutButton(basket); // Обновляем кнопку оформления заказа
+    }
+
+    /**
+     * Обновляет общую цену корзины.
+     */
+    private updateTotalPrice(basket: IProduct[]): void {
+        const totalPriceElement = document.querySelector('.basket__price') as HTMLElement;
+        if (!totalPriceElement) {
+            console.error('Элемент для отображения общей цены не найден.');
+            return;
+        }
+
+        const totalPrice = basket.reduce((sum, product) => sum + (product.price || 0), 0);
+        totalPriceElement.textContent = `${totalPrice} синапсов`;
+    }
+
+    /**
+     * Обновляет состояние кнопки оформления заказа.
+     */
+    protected updateCheckoutButton(basket: IProduct[]): void {
         const checkoutButton = document.querySelector('.basket__button') as HTMLButtonElement;
-    
         if (checkoutButton) {
+            checkoutButton.disabled = basket.length === 0; // Кнопка активна, если в корзине есть товары
             checkoutButton.addEventListener('click', () => {
                 this.orderForm.renderForm();
             });
-        } 
-    }
-
-    private updateTotalPrice(basket: IProduct[]): void {
-        const totalPriceElement = document.querySelector('.basket__price') as HTMLElement;
-    
-        const totalPrice = basket.reduce((sum, product) => sum + (product.price || 0), 0);
-        totalPriceElement.textContent = `${totalPrice} синапсов`;
+        }
     }
 }

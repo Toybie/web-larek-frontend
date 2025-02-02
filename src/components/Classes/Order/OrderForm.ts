@@ -10,6 +10,7 @@ export class OrderForm {
     private orderService: OrderService;
     private basket: Basket;
     private modal: Modal;
+    private selectedPaymentMethod: string | null = null;
 
     constructor(modalContentSelector: string, basket: Basket, modal: Modal) {
         this.renderer = new OrderFormRenderer(modalContentSelector);
@@ -22,7 +23,36 @@ export class OrderForm {
         const savedData = this.loadFormData();
         this.renderer.renderPaymentForm(savedData);
         this.formManager = new FormManager('#order-form');
+
+        const addressInput = document.querySelector('input[name="address"]') as HTMLInputElement;
+        if (addressInput && savedData.address) {
+            addressInput.value = savedData.address;
+        }
+
         this.setupFormValidation('#order-form', '#next-button');
+
+        const validateForm = () => {
+            const paymentMethodSelected = !!this.selectedPaymentMethod;
+            const allInputsFilled = this.formManager?.validateForm() || false;
+            const nextButton = document.querySelector('#next-button') as HTMLButtonElement;
+            if (nextButton) {
+                nextButton.disabled = !(allInputsFilled && paymentMethodSelected);
+            }
+        };
+
+        const savedPaymentMethod = savedData.paymentMethod;
+        if (savedPaymentMethod) {
+            const paymentButtons = document.querySelectorAll('.order__buttons .button');
+            const activeButton = Array.from(paymentButtons).find(
+                btn => btn.getAttribute('name') === (savedPaymentMethod === 'online' ? 'card' : 'cash')
+            );
+            if (activeButton) {
+                activeButton.classList.add('button_active');
+                this.selectedPaymentMethod = savedPaymentMethod;
+            }
+        }
+
+        validateForm();
         this.setupFormSubmit('#order-form', this.handleFormSubmit.bind(this));
     }
 
@@ -41,23 +71,27 @@ export class OrderForm {
 
     private setupPaymentButtons(validateForm: () => void): void {
         const paymentButtons = document.querySelectorAll('.order__buttons .button');
-        let selectedPaymentMethod: string | null = null;
 
         paymentButtons.forEach(button => {
             button.addEventListener('click', () => {
-                // Убираем активный класс у всех кнопок
                 paymentButtons.forEach(btn => btn.classList.remove('button_active'));
-
-                // Добавляем активный класс к выбранной кнопке
                 button.classList.add('button_active');
-
-                // Сохраняем выбранный способ оплаты
-                selectedPaymentMethod = button.getAttribute('name') === 'card' ? 'online' : 'cash';
-
-                // Обновляем состояние кнопки "Далее"
+                this.selectedPaymentMethod = button.getAttribute('name') === 'card' ? 'online' : 'cash';
                 validateForm();
             });
         });
+
+        const savedPaymentMethod = this.loadFormData().paymentMethod;
+        if (savedPaymentMethod) {
+            const activeButton = Array.from(paymentButtons).find(
+                btn => btn.getAttribute('name') === (savedPaymentMethod === 'online' ? 'card' : 'cash')
+            );
+            if (activeButton) {
+                activeButton.classList.add('button_active');
+                this.selectedPaymentMethod = savedPaymentMethod;
+                validateForm();
+            }
+        }
     }
 
     private setupFormValidation(formSelector: string, submitButtonSelector: string): void {
@@ -66,28 +100,19 @@ export class OrderForm {
 
         if (submitButton) {
             const validateForm = () => {
-                // Проверяем, выбран ли способ оплаты
-                const paymentMethodSelected = !!document.querySelector('.button_active');
-
-                // Проверяем, заполнены ли все обязательные поля
+                const paymentMethodSelected = !!this.selectedPaymentMethod;
                 const allInputsFilled = formManager.validateForm();
-
-                // Логируем состояние для отладки
-                console.log('Выбран способ оплаты:', paymentMethodSelected);
-                console.log('Все поля заполнены:', allInputsFilled);
-
-                // Активируем кнопку только если оба условия выполнены
                 submitButton.disabled = !(allInputsFilled && paymentMethodSelected);
             };
 
-            // Добавляем обработчики событий для полей формы
             formManager.setupValidation(submitButtonSelector);
-
-            // Настройка кнопок выбора способа оплаты
             this.setupPaymentButtons(validateForm);
-
-            // Инициализируем состояние кнопки при загрузке
             validateForm();
+
+            const inputs = document.querySelectorAll(`${formSelector} input[required]`);
+            inputs.forEach(input => {
+                input.addEventListener('input', validateForm);
+            });
         }
     }
 
@@ -103,12 +128,12 @@ export class OrderForm {
     }
 
     private handleFormSubmit(formData: Record<string, any>): void {
-        const paymentMethod = document.querySelector('.button_active')?.getAttribute('name');
-        if (!paymentMethod || !formData.address) {
+        if (!this.selectedPaymentMethod || !formData.address) {
             alert('Пожалуйста, выберите способ оплаты и укажите адрес доставки.');
             return;
         }
-        this.saveFormData({ paymentMethod, ...formData });
+
+        this.saveFormData({ paymentMethod: this.selectedPaymentMethod, ...formData });
         this.renderContactForm();
     }
 
